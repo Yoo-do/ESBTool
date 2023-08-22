@@ -2,9 +2,8 @@
 全部的窗体类
 """
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QAction, QInputDialog, QMessageBox, QFileDialog, QMenu, \
-    QDialog
-from PyQt5.Qt import Qt, QThread, pyqtSignal, QIcon, QPixmap
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QAction, QInputDialog, QMessageBox, QMenu, QDialog
+from PyQt5.Qt import QIcon, QPixmap
 import sys
 import path_lead
 
@@ -84,6 +83,8 @@ class Interface(QMainWindow):
         self.menubar.addAction(self.test_action)
         self.test_action.triggered.connect(self.test_event)
 
+        self.set_actions_enable(False)
+
     def proj_init(self):
         """
         初始化项目
@@ -140,7 +141,7 @@ class Interface(QMainWindow):
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.INDEX_WINDOW)
 
     def show_model_window(self):
-        pass
+        self.sub_window_object.switch_to_window(SubWindow.SubWindowType.MODEL_WINDOW)
 
     def test_event(self):
         """
