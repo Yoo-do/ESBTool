@@ -56,7 +56,6 @@ class Interface(QMainWindow):
         self.proj_menu.addAction(self.add_proj_action)
         self.menubar.addMenu(self.proj_menu)
 
-
         # 事件设置
         self.index_action = QAction('主页')
         self.menubar.addAction(self.index_action)
@@ -66,9 +65,10 @@ class Interface(QMainWindow):
         self.menubar.addAction(self.model_action)
         self.model_action.triggered.connect(self.show_model_window)
 
-
     """事件"""
 
+    def add_proj_event(self):
+        pass
     def show_index_window(self):
         pass
 
