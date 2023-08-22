@@ -8,9 +8,14 @@ class ProjIO:
     """
     PROJ_DIR = path_lead.get_path('\projs')
 
+    @staticmethod
+    def generate_proj_dir():
+        if not os.path.exists(ProjIO.PROJ_DIR):
+            os.mkdir(ProjIO.PROJ_DIR)
 
     @staticmethod
     def get_proj_path(proj_name):
+        ProjIO.generate_proj_dir()
         return os.path.join(ProjIO.PROJ_DIR, proj_name)
     @staticmethod
     def is_exists(proj_name) -> bool:
@@ -33,9 +38,3 @@ class ProjIO:
             os.mkdir(os.path.join(proj_path, 'apis'))
             os.mkdir(os.path.join(proj_path, 'models'))
 
-
-
-
-if __name__ == '__main__':
-    print(ProjIO.is_exists('检查系统接口文档'))
-    print(ProjIO.add_proj('检验系统接口文档'))

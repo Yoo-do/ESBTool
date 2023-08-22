@@ -7,6 +7,8 @@ from PyQt5.Qt import Qt, QThread, pyqtSignal, QIcon, QPixmap
 import sys
 import path_lead
 
+from utils import FileIO
+
 
 class Interface(QMainWindow):
     """
@@ -53,6 +55,7 @@ class Interface(QMainWindow):
         self.proj_menu.addAction(self.open_proj_action)
 
         self.add_proj_action = QAction('新增项目')
+        self.add_proj_action.triggered.connect(self.add_proj_event)
         self.proj_menu.addAction(self.add_proj_action)
         self.menubar.addMenu(self.proj_menu)
 
@@ -68,7 +71,17 @@ class Interface(QMainWindow):
     """事件"""
 
     def add_proj_event(self):
-        pass
+        """
+        新增项目事件
+        """
+        try:
+            proj_name, ok = QInputDialog.getText(self, '新增项目', '项目名称')
+            if ok:
+                FileIO.ProjIO.add_proj(proj_name)
+
+        except Exception as e:
+            QMessageBox.critical(self, '错误消息', e.__str__(), QMessageBox.Ok)
+
     def show_index_window(self):
         pass
 
