@@ -7,7 +7,7 @@ from PyQt5.Qt import Qt, QThread, pyqtSignal, QIcon, QPixmap
 import sys
 import path_lead
 
-from utils import FileIO
+from utils import FileIO, Data, DiyWidgets
 
 
 class Interface(QMainWindow):
@@ -19,6 +19,8 @@ class Interface(QMainWindow):
         self.app = QApplication(sys.argv)
         super().__init__()
         self.ui_init()
+
+        self.proj_init()
 
         sys.exit(self.app.exec_())
 
@@ -51,12 +53,15 @@ class Interface(QMainWindow):
 
         # 项目菜单栏
         self.proj_menu = QMenu('项目', self)
+
         self.open_proj_action = QAction('打开项目')
+        self.open_proj_action.triggered.connect(self.open_proj_event)
         self.proj_menu.addAction(self.open_proj_action)
 
         self.add_proj_action = QAction('新增项目')
         self.add_proj_action.triggered.connect(self.add_proj_event)
         self.proj_menu.addAction(self.add_proj_action)
+
         self.menubar.addMenu(self.proj_menu)
 
         # 事件设置
@@ -68,7 +73,32 @@ class Interface(QMainWindow):
         self.menubar.addAction(self.model_action)
         self.model_action.triggered.connect(self.show_model_window)
 
+    def proj_init(self):
+        """
+        初始化项目
+        """
+        self.set_current_proj(None)
+
+    def set_current_proj(self, proj_name):
+        """
+        切换项目
+        """
+
+        self.curr_proj_name = proj_name
+        if proj_name is None:
+            self.curr_proj = None
+            self.setWindowTitle(self.window_tittle + '  -- 未选中项目')
+        else:
+            self.curr_proj_name = proj_name
+            self.curr_proj = Data.Proj(proj_name)
+
+
+
     """事件"""
+
+    def open_proj_event(self):
+        proj_names = FileIO.ProjIO.get_proj_names()
+        dialog = DiyWidgets.ListDialog('选择项目', proj_names)
 
     def add_proj_event(self):
         """
