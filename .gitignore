@@ -1,4 +1,4 @@
-build
-dist
-venv
-.idea
+/build/
+/dist/
+/venv/
+/.idea/
