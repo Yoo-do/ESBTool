@@ -2,12 +2,14 @@
 全部的窗体类
 """
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QAction, QInputDialog, QMessageBox, QFileDialog, QMenu
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QAction, QInputDialog, QMessageBox, QFileDialog, QMenu, \
+    QDialog
 from PyQt5.Qt import Qt, QThread, pyqtSignal, QIcon, QPixmap
 import sys
 import path_lead
 
 from utils import FileIO, Data, DiyWidgets
+from subwindows import SubWindow
 
 
 class Interface(QMainWindow):
@@ -18,9 +20,13 @@ class Interface(QMainWindow):
     def __init__(self):
         self.app = QApplication(sys.argv)
         super().__init__()
-        self.ui_init()
+
 
         self.proj_init()
+        self.sub_window_object = SubWindow.SubWindow(self)
+        self.ui_init()
+
+
 
         sys.exit(self.app.exec_())
 
@@ -39,6 +45,7 @@ class Interface(QMainWindow):
         # 菜单栏初始化
         self.menubar_init()
 
+        self.show_index_window()
         self.show()
 
     def menubar_init(self):
@@ -73,32 +80,49 @@ class Interface(QMainWindow):
         self.menubar.addAction(self.model_action)
         self.model_action.triggered.connect(self.show_model_window)
 
+        self.test_action = QAction('测试')
+        self.menubar.addAction(self.test_action)
+        self.test_action.triggered.connect(self.test_event)
+
     def proj_init(self):
         """
         初始化项目
         """
-        self.set_current_proj(None)
+        self.curr_proj_name = None
+        self.curr_proj = None
 
     def set_current_proj(self, proj_name):
         """
         切换项目
         """
-
         self.curr_proj_name = proj_name
-        if proj_name is None:
-            self.curr_proj = None
-            self.setWindowTitle(self.window_tittle + '  -- 未选中项目')
-        else:
+        if proj_name is not None:
             self.curr_proj_name = proj_name
             self.curr_proj = Data.Proj(proj_name)
+            self.setWindowTitle(self.window_tittle + '  -- ' + proj_name)
+
+            self.set_actions_enable(True)
 
 
+    def set_actions_enable(self, a0: bool):
+        """
+        控制按钮是否可用
+        """
+        self.model_action.setEnabled(a0)
 
     """事件"""
 
     def open_proj_event(self):
         proj_names = FileIO.ProjIO.get_proj_names()
-        dialog = DiyWidgets.ListDialog('选择项目', proj_names)
+        dialog = DiyWidgets.ListDialog(self, '选择项目', proj_names)
+        if dialog.exec_() == QDialog.Accepted:
+            selected_proj = [item.text() for item in dialog.list_widget.selectedItems()][0]
+            self.set_current_proj(selected_proj)
+
+
+            # 切换项目的时候刷新全部窗体数据，并切换到到主页
+            self.sub_window_object.fresh_all_data()
+            self.show_index_window()
 
     def add_proj_event(self):
         """
@@ -113,10 +137,17 @@ class Interface(QMainWindow):
             QMessageBox.critical(self, '错误消息', e.__str__(), QMessageBox.Ok)
 
     def show_index_window(self):
-        pass
+        self.sub_window_object.switch_to_window(SubWindow.SubWindowType.INDEX_WINDOW)
 
     def show_model_window(self):
         pass
+
+    def test_event(self):
+        """
+        测试事件
+        """
+        print(self.curr_proj_name)
+        print(self.curr_proj)
 
 
 if __name__ == '__main__':

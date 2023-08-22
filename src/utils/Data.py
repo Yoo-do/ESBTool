@@ -1,6 +1,6 @@
 import json
 import jsonschema
-import FileIO
+from src.utils import FileIO
 
 
 class Model:

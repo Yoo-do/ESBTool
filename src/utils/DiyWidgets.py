@@ -1,8 +1,15 @@
 from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox
-class ListDialog(QDialog):
-    def __init__(self, tittle, items):
-        super().__init__()
 
+
+class ListDialog(QDialog):
+    def __init__(self, parent, tittle, items):
+        """
+        弹窗列表
+        """
+
+        super().__init__(parent)
+
+        self.show()
         self.setWindowTitle(tittle)
 
         layout = QVBoxLayout()
