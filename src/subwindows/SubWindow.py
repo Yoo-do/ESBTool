@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, QTreeWidget, QTreeWidgetItem
 from PyQt5.Qt import Qt, QThread, pyqtSignal
 from enum import Enum
-from src.utils import Data
+from src.utils import Data, DiyWidgets
 
 
 class SubWindowType(Enum):
@@ -88,9 +88,7 @@ class ModelWindow(QWidget):
         model_detail_button_layout.addWidget(self.model_detail_delete_node)
 
         # 模型节点展示
-        self.model_detial_tree = QTreeWidget(self)
-        self.model_detial_tree.setColumnCount(2)
-        self.model_detial_tree.setHeaderLabels(["节点", "类型", '中文名', '说明'])
+        self.model_detial_tree = DiyWidgets.ModelNodeTreeWidget(self)
 
         model_detail_layout.addWidget(self.model_detial_tree)
 
@@ -109,8 +107,9 @@ class ModelWindow(QWidget):
         """
         刷新节点数据
         """
+        self.model_detial_tree.clear()
         if data is None:
-            self.model_detial_tree.clear()
+            return
 
         self.root = self.generate_tree(self.model_detial_tree, data, '根节点')
 
@@ -136,8 +135,7 @@ class ModelWindow(QWidget):
                 root.setText(2, data['tittle'])
                 root.setText(3, data['description'])
         except Exception as e:
-            print(e.__str__())
-            print(name)
+            raise Exception('节点:' + name + ' ' + e.__str__())
 
 
     """事件"""
