@@ -113,6 +113,7 @@ class ModelWindow(QWidget):
         self.tree_standard_model = DiyWidgets.ModelStandardModel()
         self.model_detial_tree.setModel(self.tree_standard_model)
 
+
         self.generate_tree_model(self.tree_standard_model, data, '根节点')
 
 

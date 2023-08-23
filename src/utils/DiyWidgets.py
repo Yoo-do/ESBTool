@@ -54,38 +54,43 @@ class ModelTreeView(QTreeView):
     def __init__(self, parent):
         super().__init__(parent=parent)
 
-class ModelStandardItem(QStandardItem):
-    def appDir(self, tree_view: QTreeView, dir_name, data_type):
-        dir_name_item = QStandardItem(dir_name)
-        data_type_item = QStandardItem(data_type)
-        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
-        self.appendRow([dir_name_item, data_type_item])
 
 class ModelStandardItemDir(QStandardItem):
+    """
+    模型文件类
+    """
+
     def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
-        super().__init__()
-        self.dir_name_item = QStandardItem(dir_name)
+        super().__init__(dir_name)
         self.data_type_item = QStandardItem(data_type)
         tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
 
-        parent.appendRow([self.dir_name_item, self.data_type_item])
-
-
+        parent.appendRow(self)
+        if isinstance(parent, self.__class__):
+            parent.setChild(parent.rowCount() - 1, 1, self.data_type_item)
+        elif isinstance(parent, ModelStandardModel):
+            parent.setItem(parent.rowCount() - 1, 1, self.data_type_item)
 
 
 class ModelStandardItemNode(QStandardItem):
+    """
+    模型节点类
+    """
+
     def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, node_name, data_type,
                  is_required, cn_name, description):
-        super().__init__()
-        self.dir_name_item = QStandardItem(node_name)
+        super().__init__(node_name)
         self.data_type_item = QStandardItem(data_type)
         self.is_required_item = QStandardItem(is_required)
         self.cn_name_item = QStandardItem(cn_name)
         self.description_item = QStandardItem(description)
         tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
 
-        parent.appendRow(
-            [self.dir_name_item, self.data_type_item, self.is_required_item, self.cn_name_item, self.description_item])
+        parent.appendRow(self)
+        parent.setChild(parent.rowCount() - 1, 1, self.data_type_item)
+        parent.setChild(parent.rowCount() - 1, 2, self.is_required_item)
+        parent.setChild(parent.rowCount() - 1, 3, self.cn_name_item)
+        parent.setChild(parent.rowCount() - 1, 4, self.description_item)
 
 
 class ModelStandardModel(QStandardItemModel):
