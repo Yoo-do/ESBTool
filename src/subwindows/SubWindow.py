@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
+    QTreeWidget, QTreeWidgetItem
 from PyQt5.Qt import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from enum import Enum
 from src.utils import Data, DiyWidgets
 
@@ -70,7 +72,6 @@ class ModelWindow(QWidget):
         self.model_delete_button = QPushButton('删除', self)
         model_list_button_layout.addWidget(self.model_delete_button)
 
-
         # 模型细节
 
         # 模型细节布局
@@ -88,12 +89,12 @@ class ModelWindow(QWidget):
         model_detail_button_layout.addWidget(self.model_detail_delete_node)
 
         # 模型节点展示
-        self.model_detial_tree = DiyWidgets.ModelNodeTreeWidget(self)
+        self.model_detial_tree = DiyWidgets.ModelTreeView(self)
 
         model_detail_layout.addWidget(self.model_detial_tree)
 
-
-
+        # 结构模型
+        self.tree_standard_model = None
 
     def fresh_data(self):
         self.model_list.clear()
@@ -102,51 +103,42 @@ class ModelWindow(QWidget):
             models = [model.model_name for model in self.main_window.curr_proj.models]
             self.model_list.addItems(models)
 
-
     def fresh_model_detail(self, data: dict):
         """
         刷新节点数据
         """
-        self.model_detial_tree.clear()
         if data is None:
             return
 
-        self.root = self.generate_tree(self.model_detial_tree, data, '根节点')
+        self.tree_standard_model = DiyWidgets.ModelStandardModel()
+        self.model_detial_tree.setModel(self.tree_standard_model)
+
+        self.generate_tree_model(self.tree_standard_model, data, '根节点')
 
 
 
-    def generate_tree(self, parent, data, name='Items') -> QTreeWidgetItem:
+    def generate_tree_model(self, parent, data, name='Items'):
         try:
             if data['type'] == 'object':
-                root = QTreeWidgetItem(parent)
-                root.setText(0, name)
-                root.setText(1, data['type'])
+                root = DiyWidgets.ModelStandardItemDir(self.model_detial_tree, parent, name, data['type'])
                 for key, value in data['properties'].items():
-                    self.generate_tree(root, value, key)
+                    self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                root = QTreeWidgetItem(parent)
-                root.setText(0, name)
-                root.setText(1, data['type'])
-                self.generate_tree(root, data['items'])
+                root = DiyWidgets.ModelStandardItemDir(self.model_detial_tree, parent, name, data['type'])
+                self.generate_tree_model(root, data['items'])
             else:
-                root = QTreeWidgetItem(parent)
-                root.setText(0, name)
-                root.setText(1, data['type'])
-                root.setText(2, data['tittle'])
-                root.setText(3, data['description'])
+                DiyWidgets.ModelStandardItemNode(self.model_detial_tree, parent, name, data['type'], data['require'],
+                                                 data['tittle'], data['description'])
         except Exception as e:
             raise Exception('节点:' + name + ' ' + e.__str__())
-
 
     """事件"""
 
     def model_selected_event(self):
-        model_name =self.model_list.currentItem().text()
+        model_name = self.model_list.currentItem().text()
         data = [model.model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
 
         self.fresh_model_detail(data)
-
-
 
 
 class SubWindow:

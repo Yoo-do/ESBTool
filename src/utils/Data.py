@@ -2,6 +2,8 @@ import json
 import jsonschema
 from src.utils import FileIO
 
+ModelDataTypes = ['object', 'array', 'integer', 'number', 'string', 'boolean']
+
 
 class Model:
     def __init__(self, model_name: str, model: dict):

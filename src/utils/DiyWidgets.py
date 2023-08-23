@@ -1,4 +1,9 @@
-from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox, \
+    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QTreeWidgetItemIterator
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtCore import Qt
+
+from src.utils import Data
 
 
 class ListDialog(QDialog):
@@ -26,40 +31,59 @@ class ListDialog(QDialog):
         self.setLayout(layout)
 
 
-class ModelNodeTreeWidgetItem(QTreeWidgetItem):
-    """
-    模型节点展示窗体
-    """
-    def __init__(self, parent):
-        super().__init__(parent=parent)
+class ComboBoxDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = QComboBox(parent)
+        editor.addItems(Data.ModelDataTypes)
+        return editor
 
-    def set_node_name(self, node_name):
-        self.setText(0, node_name)
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, role=Qt.DisplayRole)
+        editor.setCurrentText(value)
 
-    def set_type_name(self, type_name):
-        self.setText(0, type_name)
-
-    def setParent(self, parent: QTreeWidget | QTreeWidgetItem):
-        self.setParent(parent)
+    def setModelData(self, editor, model, index):
+        value = editor.currentText()
+        model.setData(index, value, role=Qt.EditRole)
 
 
-
-
-
-
-
-
-
-
-class ModelNodeTreeWidget(QTreeWidget):
+class ModelTreeView(QTreeView):
     """
     模型展示窗体
     """
+
     def __init__(self, parent):
         super().__init__(parent=parent)
-        self.setColumnCount(2)
-        self.headers = ["节点", "类型", '中文名', '说明']
-        self.setHeaderLabels(self.headers)
+
+
+class ModelStandardItemDir(QStandardItem):
+    def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
+        super().__init__()
+        self.dir_name_item = QStandardItem(dir_name)
+        self.data_type_item = QStandardItem(data_type)
+        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
+
+        parent.appendRow([self.dir_name_item, self.data_type_item])
 
 
 
+
+class ModelStandardItemNode(QStandardItem):
+    def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, node_name, data_type,
+                 is_required, cn_name, description):
+        super().__init__()
+        self.dir_name_item = QStandardItem(node_name)
+        self.data_type_item = QStandardItem(data_type)
+        self.is_required_item = QStandardItem(is_required)
+        self.cn_name_item = QStandardItem(cn_name)
+        self.description_item = QStandardItem(description)
+        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
+
+        parent.appendRow(
+            [self.dir_name_item, self.data_type_item, self.is_required_item, self.cn_name_item, self.description_item])
+
+
+class ModelStandardModel(QStandardItemModel):
+    def __init__(self):
+        super().__init__()
+        self.headers = ['节点', '类型', '必选', '中文名', '描述']
+        self.setHorizontalHeaderLabels(self.headers)
