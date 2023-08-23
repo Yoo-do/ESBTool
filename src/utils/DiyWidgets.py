@@ -54,6 +54,12 @@ class ModelTreeView(QTreeView):
     def __init__(self, parent):
         super().__init__(parent=parent)
 
+class ModelStandardItem(QStandardItem):
+    def appDir(self, tree_view: QTreeView, dir_name, data_type):
+        dir_name_item = QStandardItem(dir_name)
+        data_type_item = QStandardItem(data_type)
+        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
+        self.appendRow([dir_name_item, data_type_item])
 
 class ModelStandardItemDir(QStandardItem):
     def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
