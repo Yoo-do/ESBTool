@@ -62,8 +62,4 @@ class ModelNodeTreeWidget(QTreeWidget):
         self.setHeaderLabels(self.headers)
 
 
-    def set_widget(self, node: ModelNodeTreeWidgetItem):
-        pass
-
-
 
