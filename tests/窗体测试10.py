@@ -52,7 +52,7 @@ class DemoTreeView(QMainWindow):
         # 调整第一列的宽度
         treeView.header().resizeSection(0, 160)
         # 设置成有虚线连接的方式
-        treeView.setStyle(QStyleFactory.create('windows'))
+        # treeView.setStyle(QStyleFactory.create('windows'))
         # 完全展开
         treeView.expandAll()
 

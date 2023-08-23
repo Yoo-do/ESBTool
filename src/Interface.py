@@ -147,9 +147,16 @@ class Interface(QMainWindow):
         """
         测试事件
         """
-        print(self.curr_proj_name)
-        print(self.curr_proj)
+        curr_index = self.sub_window_object.stack_widget.currentIndex()
 
+        if curr_index == SubWindow.SubWindowType.MODEL_WINDOW.value[0]:
+            print('已进入模型页面')
+            curr_widget = self.sub_window_object.stack_widget.currentWidget()
+            if curr_widget.tree_standard_model is not None:
+                curr_widget.tree_standard_model.__json__()
+
+        else:
+            print('当前页面为' + curr_index.__str__())
 
 if __name__ == '__main__':
     interface = Interface()

@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox, \
-    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QTreeWidgetItemIterator
+    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QTreeWidgetItemIterator, QCheckBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 
@@ -31,7 +31,11 @@ class ListDialog(QDialog):
         self.setLayout(layout)
 
 
-class ComboBoxDelegate(QStyledItemDelegate):
+class DataTypeCombox(QStyledItemDelegate):
+    """
+    数据类型下拉框
+    """
+
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         editor.addItems(Data.ModelDataTypes)
@@ -44,6 +48,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
+
 
 
 class ModelTreeView(QTreeView):
@@ -63,7 +68,7 @@ class ModelStandardItemDir(QStandardItem):
     def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
         super().__init__(dir_name)
         self.data_type_item = QStandardItem(data_type)
-        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
+        tree_view.setItemDelegateForColumn(1, DataTypeCombox())
 
         parent.appendRow(self)
         if isinstance(parent, self.__class__):
@@ -77,14 +82,19 @@ class ModelStandardItemNode(QStandardItem):
     模型节点类
     """
 
-    def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, node_name, data_type,
-                 is_required, cn_name, description):
+    def __init__(self, tree_view: QTreeView, parent: QStandardItem, node_name, data_type,
+                 is_required: bool, cn_name, description):
         super().__init__(node_name)
         self.data_type_item = QStandardItem(data_type)
-        self.is_required_item = QStandardItem(is_required)
+
+        self.is_required_item = QStandardItem()
+        self.is_required_item.setCheckable(True)
+        self.is_required_item.setCheckState(Qt.Checked if is_required else Qt.Unchecked)
+
         self.cn_name_item = QStandardItem(cn_name)
         self.description_item = QStandardItem(description)
-        tree_view.setItemDelegateForColumn(1, ComboBoxDelegate())
+
+        tree_view.setItemDelegateForColumn(1, DataTypeCombox())
 
         parent.appendRow(self)
         parent.setChild(parent.rowCount() - 1, 1, self.data_type_item)
@@ -93,8 +103,15 @@ class ModelStandardItemNode(QStandardItem):
         parent.setChild(parent.rowCount() - 1, 4, self.description_item)
 
 
+
 class ModelStandardModel(QStandardItemModel):
     def __init__(self):
         super().__init__()
         self.headers = ['节点', '类型', '必选', '中文名', '描述']
         self.setHorizontalHeaderLabels(self.headers)
+
+    def __json__(self):
+        print('已调用__json__')
+        children = self.children()
+        print(children)
+        root = self.item(1)

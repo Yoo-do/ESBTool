@@ -112,11 +112,10 @@ class ModelWindow(QWidget):
 
         self.tree_standard_model = DiyWidgets.ModelStandardModel()
         self.model_detial_tree.setModel(self.tree_standard_model)
-
+        self.model_detial_tree.header().resizeSection(0, 300)
+        self.model_detial_tree.selectionModel().currentChanged.connect(self.onCurrentChanged)
 
         self.generate_tree_model(self.tree_standard_model, data, '根节点')
-
-
 
     def generate_tree_model(self, parent, data, name='Items'):
         try:
@@ -140,6 +139,27 @@ class ModelWindow(QWidget):
         data = [model.model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
 
         self.fresh_model_detail(data)
+
+    def onCurrentChanged(self, current, previous):
+        """
+        信息展示
+        """
+
+        txt = '父级:[{}] '.format(str(current.parent().data()))
+        txt += '当前选中:[(行{},列{})] '.format(current.row(), current.column())
+
+        name = ''
+        info = ''
+        if current.column() == 0:
+            name = str(current.data())
+            info = str(current.sibling(current.row(), 1).data())
+        else:
+            name = str(current.sibling(current.row(), 0).data())
+            info = str(current.data())
+
+        txt += '名称:[{}]  信息:[{}]'.format(name, info)
+
+        self.main_window.statusBar().showMessage(txt)
 
 
 class SubWindow:
