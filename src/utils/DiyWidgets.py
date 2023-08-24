@@ -117,28 +117,31 @@ class ModelStandardModel(QStandardItemModel):
         """
         if self.rowCount() == 1:
             root = self.item(0)
-            data_type = self.item(0, 1)
+            data_type = self.item(0, 1).text()
             result = {"type": data_type, "properties": self.generate_json(root)}
             print(result)
 
 
 
     def generate_json(self, item: QStandardItem):
-        result = {}
-        if item.rowCount() > 0:
-            for index in item.rowCount():
-                child = item.child(index)
-                col_name = item.child(index, 0)
-                data_type = item.child(index, 1)
-                require = item.child(index, 2)
-                tittle = item.child(index, 3)
-                description = item.child(index, 4)
-                if item.child(index).rowCount() == 0:
-                    result.update({col_name: {"type": data_type, "tittle": tittle, "description": description, "require": require}})
-                else:
-                    if data_type == 'array':
-                        result.update({col_name: {"type": data_type, "items": self.generate_json(child)}})
-                    elif data_type == 'object':
-                        result.update({col_name: {"type": data_type, "properties": self.generate_json(child)}})
-        return result
+        try:
+            result = {}
+            if item.rowCount() > 0:
+                for index in range(item.rowCount()):
+                    child = item.child(index)
+                    col_name = None if item.child(index, 0) is None else item.child(index, 0).text()
+                    data_type = None if item.child(index, 1) is None else item.child(index, 1).text()
+                    require = None if item.child(index, 2) is None else item.child(index, 2).text()
+                    tittle = None if item.child(index, 3) is None else item.child(index, 3).text()
+                    description = None if item.child(index, 4) is None else item.child(index, 4).text()
+                    if item.child(index).rowCount() == 0:
+                        result.update({col_name: {"type": data_type, "tittle": tittle, "description": description, "require": require}})
+                    else:
+                        if data_type == 'array':
+                            result.update({col_name: {"type": data_type, "items": self.generate_json(child)}})
+                        elif data_type == 'object':
+                            result.update({col_name: {"type": data_type, "properties": self.generate_json(child)}})
+            return result
+        except Exception as e:
+            print("节点: ", item.child(0, 0).text(), "报错：", e.__str__())
 
