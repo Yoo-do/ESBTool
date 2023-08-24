@@ -1,3 +1,5 @@
+import json
+
 from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox, \
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QTreeWidgetItemIterator, QCheckBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -110,7 +112,7 @@ class ModelStandardModel(QStandardItemModel):
         self.headers = ['节点', '类型', '必选', '中文名', '描述']
         self.setHorizontalHeaderLabels(self.headers)
 
-    def __json__(self):
+    def __jsonschema__(self):
         """
         转成对应的jsonschema
         :return:
@@ -118,30 +120,60 @@ class ModelStandardModel(QStandardItemModel):
         if self.rowCount() == 1:
             root = self.item(0)
             data_type = self.item(0, 1).text()
-            result = {"type": data_type, "properties": self.generate_json(root)}
-            print(result)
+
+            properties, required = self.generate_json(root, True)
+            result = {"type": data_type, "properties": properties, "required": required}
+            return result
 
 
 
-    def generate_json(self, item: QStandardItem):
+    def generate_json(self, item: QStandardItem, is_object=False):
+        """
+        递归解析ModelStandardModel
+        在上级type为object时, is_object为True
+        在type为object时返回:properties, required
+        其他时返回: result
+        """
+
         try:
             result = {}
+            required = []
             if item.rowCount() > 0:
                 for index in range(item.rowCount()):
                     child = item.child(index)
                     col_name = None if item.child(index, 0) is None else item.child(index, 0).text()
                     data_type = None if item.child(index, 1) is None else item.child(index, 1).text()
-                    require = None if item.child(index, 2) is None else item.child(index, 2).text()
+
+                    require_state = None if item.child(index, 2) is None else item.child(index, 2).checkState()
+                    if require_state == Qt.Checked:
+                        require = True
+                        required.append(col_name)
+                    elif require_state == Qt.Unchecked:
+                        require = False
+                    else:
+                        require = None
+
                     tittle = None if item.child(index, 3) is None else item.child(index, 3).text()
                     description = None if item.child(index, 4) is None else item.child(index, 4).text()
                     if item.child(index).rowCount() == 0:
                         result.update({col_name: {"type": data_type, "tittle": tittle, "description": description, "require": require}})
                     else:
                         if data_type == 'array':
-                            result.update({col_name: {"type": data_type, "items": self.generate_json(child)}})
+                            # array类型的默认加入required
+                            required.append(col_name)
+                            # 数组类型的往下再取一个节点
+                            res = {"type": data_type}
+                            res.update({"items": next(iter(self.generate_json(child).values()))})
+                            result.update({col_name: res})
                         elif data_type == 'object':
-                            result.update({col_name: {"type": data_type, "properties": self.generate_json(child)}})
+                            child_properties, child_required = self.generate_json(child, True)
+                            result.update({col_name: {"type": data_type, "properties": child_properties, "required": child_required}})
+
+            if is_object:
+                return result, required
             return result
+
+
         except Exception as e:
-            print("节点: ", item.child(0, 0).text(), "报错：", e.__str__())
+            raise Exception("节点: ", item.child(0, 0).text(), "报错：", e.__str__())
 

@@ -18,12 +18,15 @@ class Interface(QMainWindow):
 
     def __init__(self):
         self.app = QApplication(sys.argv)
-        super().__init__()
+        try:
+            super().__init__()
 
+            self.proj_init()
+            self.sub_window_object = SubWindow.SubWindow(self)
+            self.ui_init()
 
-        self.proj_init()
-        self.sub_window_object = SubWindow.SubWindow(self)
-        self.ui_init()
+        except Exception as e:
+            QMessageBox.critical(self, '错误消息', e.__str__())
 
 
 
@@ -153,7 +156,7 @@ class Interface(QMainWindow):
             print('已进入模型页面')
             curr_widget = self.sub_window_object.stack_widget.currentWidget()
             if curr_widget.tree_standard_model is not None:
-                curr_widget.tree_standard_model.__json__()
+                curr_widget.tree_standard_model.__jsonschema__()
 
         else:
             print('当前页面为' + curr_index.__str__())

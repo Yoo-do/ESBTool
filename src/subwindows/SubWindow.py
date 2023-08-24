@@ -82,11 +82,18 @@ class ModelWindow(QWidget):
         model_detail_button_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
         model_detail_layout.addLayout(model_detail_button_layout)
 
-        self.model_detail_add_node = QPushButton('新增节点', self)
-        model_detail_button_layout.addWidget(self.model_detail_add_node)
+        self.model_detail_add_node_button = QPushButton('新增节点', self)
+        model_detail_button_layout.addWidget(self.model_detail_add_node_button)
 
-        self.model_detail_delete_node = QPushButton('删除节点', self)
-        model_detail_button_layout.addWidget(self.model_detail_delete_node)
+        self.model_detail_delete_node_button = QPushButton('删除节点', self)
+        model_detail_button_layout.addWidget(self.model_detail_delete_node_button)
+
+        self.model_import_button = QPushButton('导入json', self)
+        model_detail_button_layout.addWidget(self.model_import_button)
+
+        self.model_save_button = QPushButton('保存', self)
+        self.model_save_button.clicked.connect(self.model_save_event)
+        model_detail_button_layout.addWidget(self.model_save_button)
 
         # 模型节点展示
         self.model_detial_tree = DiyWidgets.ModelTreeView(self)
@@ -94,7 +101,7 @@ class ModelWindow(QWidget):
         model_detail_layout.addWidget(self.model_detial_tree)
 
         # 结构模型
-        self.tree_standard_model = None
+        self.tree_standard_model: DiyWidgets.ModelStandardModel = None
 
     def fresh_data(self):
         self.model_list.clear()
@@ -160,6 +167,14 @@ class ModelWindow(QWidget):
         txt += '名称:[{}]  信息:[{}]'.format(name, info)
 
         self.main_window.statusBar().showMessage(txt)
+
+
+    def model_save_event(self):
+        """保存事件"""
+        model_name = self.model_list.currentItem().text()
+        curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        curr_model.save(self.tree_standard_model.__jsonschema__())
+
 
 
 class SubWindow:

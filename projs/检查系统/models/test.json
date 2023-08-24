@@ -1,0 +1,1 @@
+{"type": "object", "properties": {"id": {"type": "integer", "tittle": "消息id", "description": "", "require": false}}, "required": []}

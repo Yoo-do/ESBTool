@@ -6,7 +6,8 @@ ModelDataTypes = ['object', 'array', 'integer', 'number', 'string', 'boolean']
 
 
 class Model:
-    def __init__(self, model_name: str, model: dict):
+    def __init__(self, proj_name: str, model_name: str, model: dict):
+        self.proj_name = proj_name
         self.model_name = model_name
         self.model = model
 
@@ -17,11 +18,24 @@ class Model:
         except jsonschema.ValidationError as e:
             raise Exception(e.path).__str__() + ' : ' + e.message.__str__()
 
+    def save(self, data: dict):
+        """
+        重写model的值，并保存文件
+        """
+
+        self.model = data
+        FileIO.ProjIO.rewrite_model(self.proj_name, self.model_name, self.model)
+
+    def rename(self, target_name):
+        """
+        修改model的名字
+        """
+        FileIO.ProjIO.rename_model(self.proj_name, self.model_name, target_name)
+        self.model_name = target_name
+
 class Api(Model):
     def __init__(self, model_name: str, model: dict):
         super().__init__(model_name, model)
-
-
 
 
 class Proj:
@@ -39,7 +53,7 @@ class Proj:
         """
         models = FileIO.ProjIO.get_models(self.proj_name)
         for model in models:
-            self.models.append(Model(model['model_name'], model['model']))
+            self.models.append(Model(self.proj_name, model['model_name'], model['model']))
 
     def fresh_apis(self):
         """
@@ -47,9 +61,9 @@ class Proj:
         """
         pass
 
-
     def export_file(self):
         pass
+
 
 if __name__ == '__main__':
     proj = Proj('检查系统')
