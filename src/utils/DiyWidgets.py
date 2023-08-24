@@ -111,7 +111,34 @@ class ModelStandardModel(QStandardItemModel):
         self.setHorizontalHeaderLabels(self.headers)
 
     def __json__(self):
-        print('已调用__json__')
-        children = self.children()
-        print(children)
-        root = self.item(1)
+        """
+        转成对应的jsonschema
+        :return:
+        """
+        if self.rowCount() == 1:
+            root = self.item(0)
+            data_type = self.item(0, 1)
+            result = {"type": data_type, "properties": self.generate_json(root)}
+            print(result)
+
+
+
+    def generate_json(self, item: QStandardItem):
+        result = {}
+        if item.rowCount() > 0:
+            for index in item.rowCount():
+                child = item.child(index)
+                col_name = item.child(index, 0)
+                data_type = item.child(index, 1)
+                require = item.child(index, 2)
+                tittle = item.child(index, 3)
+                description = item.child(index, 4)
+                if item.child(index).rowCount() == 0:
+                    result.update({col_name: {"type": data_type, "tittle": tittle, "description": description, "require": require}})
+                else:
+                    if data_type == 'array':
+                        result.update({col_name: {"type": data_type, "items": self.generate_json(child)}})
+                    elif data_type == 'object':
+                        result.update({col_name: {"type": data_type, "properties": self.generate_json(child)}})
+        return result
+

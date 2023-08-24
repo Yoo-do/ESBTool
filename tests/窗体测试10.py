@@ -63,6 +63,46 @@ class DemoTreeView(QMainWindow):
         self.treeView = treeView
         self.setCentralWidget(treeView)
 
+
+        root = self.model.item(0)
+        print(root)
+        print(root.text())
+        print(self.model_to_json(self.model))
+
+
+    def model_to_json(self, model: QStandardItemModel | QStandardItem):
+        result = {}
+        properties = {}
+        if isinstance(model, QStandardItemModel):
+            result.update({"title": '根节点', 'info': '根节点'})
+            for index in range(model.rowCount()):
+                item = model.item(index)
+                if item.rowCount() > 0:
+                    properties.update({"title": item.text(), "info": item.text(), "properties": self.model_to_json(item)})
+                else:
+                    properties.update(
+                        {"title": item.text(), "info": item.text()})
+            result.update({"properties": properties})
+            return result
+
+        elif isinstance(model, QStandardItem):
+            result = {}
+            properties = {}
+            for index in range(model.rowCount()):
+                item = model.child(index)
+                if item.rowCount() > 0:
+                    properties.update(
+                        {"title": item.text(), "info": item.child(1), "properties": self.model_to_json(item)})
+                    result.update({"properties": properties})
+
+                else:
+                    result.update(
+                        {"title": item.text(), "info": item.child(1)})
+            return result
+
+
+
+
     def onCurrentChanged(self, current, previous):
         txt = '父级:[{}] '.format(str(current.parent().data()))
         txt += '当前选中:[(行{},列{})] '.format(current.row(), current.column())
