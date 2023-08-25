@@ -80,17 +80,13 @@ class ModelWindow(QWidget):
         model_detail_button_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
         model_detail_layout.addLayout(model_detail_button_layout)
 
-        self.model_detail_add_node_button = QPushButton('新增节点', self)
-        model_detail_button_layout.addWidget(self.model_detail_add_node_button)
-
-        self.model_detail_delete_node_button = QPushButton('删除节点', self)
-        model_detail_button_layout.addWidget(self.model_detail_delete_node_button)
-
         self.model_import_button = QPushButton('导入json', self)
+        self.model_import_button.setEnabled(False)
         self.model_import_button.clicked.connect(self.model_import_event)
         model_detail_button_layout.addWidget(self.model_import_button)
 
         self.model_save_button = QPushButton('保存', self)
+        self.model_import_button.setEnabled(False)
         self.model_save_button.clicked.connect(self.model_save_event)
         model_detail_button_layout.addWidget(self.model_save_button)
 
@@ -103,6 +99,14 @@ class ModelWindow(QWidget):
         self.tree_standard_model: DiyWidgets.ModelStandardModel = None
 
     def fresh_data(self):
+        """
+        刷新数据和全部数据窗体
+        :return:
+        """
+        # 按钮状态调整
+        self.model_import_button.setEnabled(False)
+        self.model_save_button.setEnabled(False)
+
         self.model_list.clear()
         if self.tree_standard_model is not None:
             self.tree_standard_model.clear()
@@ -143,10 +147,19 @@ class ModelWindow(QWidget):
     """事件"""
 
     def model_selected_event(self):
+        """
+        模型选中事件
+        :return:
+        """
+        # 更新按钮状态
+        self.model_import_button.setEnabled(True)
+        self.model_save_button.setEnabled(True)
+
         model_name = self.model_list.currentItem().text()
         data = [model.model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
 
         self.fresh_model_detail(data)
+        self.model_detial_tree.expandAll()
 
     def onCurrentChanged(self, current, previous):
         """
@@ -189,6 +202,10 @@ class ModelWindow(QWidget):
                 curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
                 data = dialog.data
                 curr_model.import_json(data)
+
+                # 刷新节点
+                self.model_selected_event()
+
         except Exception as e:
             print(e.__str__())
 

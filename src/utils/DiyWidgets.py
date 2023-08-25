@@ -181,7 +181,6 @@ class ModelDialog(QDialog):
         layout.addWidget(self.ok_button)
         layout.addWidget(self.cancel_button)
 
-        self.show()
 
     def format_json_event(self):
         """
