@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
-    QTreeWidget, QTreeWidgetItem
+    QTreeWidget, QTreeWidgetItem, QDialog
 from PyQt5.Qt import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from enum import Enum
@@ -89,6 +89,7 @@ class ModelWindow(QWidget):
         model_detail_button_layout.addWidget(self.model_detail_delete_node_button)
 
         self.model_import_button = QPushButton('导入json', self)
+        self.model_import_button.clicked.connect(self.model_import_event)
         model_detail_button_layout.addWidget(self.model_import_button)
 
         self.model_save_button = QPushButton('保存', self)
@@ -174,6 +175,25 @@ class ModelWindow(QWidget):
         model_name = self.model_list.currentItem().text()
         curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
         curr_model.save(self.tree_standard_model.__jsonschema__())
+
+
+    def model_import_event(self):
+        """
+        导入模型事件
+        :return:
+        """
+        try:
+            dialog = DiyWidgets.ModelDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                model_name = self.model_list.currentItem().text()
+                curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+                data = dialog.data
+                curr_model.import_json(data)
+        except Exception as e:
+            print(e.__str__())
+
+    def model_add_node(self):
+        pass
 
 
 

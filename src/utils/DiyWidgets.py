@@ -1,7 +1,7 @@
 import json
 
-from PyQt5.QtWidgets import QDialog, QListWidget, QVBoxLayout, QDialogButtonBox, \
-    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QTreeWidgetItemIterator, QCheckBox
+from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, \
+    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QCheckBox, QTextEdit, QPushButton
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
 
@@ -19,7 +19,7 @@ class ListDialog(QDialog):
         self.show()
         self.setWindowTitle(tittle)
 
-        layout = QVBoxLayout()
+        layout = QBoxLayout(QBoxLayout.TopToBottom)
 
         self.list_widget = QListWidget()
         self.list_widget.addItems(items)
@@ -50,6 +50,59 @@ class DataTypeCombox(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
+
+
+class ModelDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setWindowTitle("导入模型")
+
+
+        self.text_edit = QTextEdit()
+        self.text_edit.setPlaceholderText("请输入JSON文本")
+
+        # 创建按钮
+        self.format_button = QPushButton("格式化JSON")
+        self.format_button.clicked.connect(self.format_json_event)
+        self.ok_button = QPushButton("确定")
+        self.ok_button.clicked.connect(self.accept)
+        self.cancel_button = QPushButton("取消")
+        self.cancel_button.clicked.connect(self.reject)
+
+        # 窗体布局
+        layout = QBoxLayout(QBoxLayout.TopToBottom, self)
+        layout.addWidget(self.text_edit)
+        layout.addWidget(self.format_button)
+        layout.addWidget(self.ok_button)
+        layout.addWidget(self.cancel_button)
+
+        self.show()
+
+    def format_json_event(self):
+        """
+        格式化json事件
+        :return:
+        """
+        json_text = self.text_edit.toPlainText()
+        try:
+            parsed = json.loads(json_text)
+            formatted_json = json.dumps(parsed, indent=4, ensure_ascii=False)
+            self.text_edit.setPlainText(formatted_json)
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "错误", "无效的JSON文本")
+
+    def accept(self):
+        json_text = self.text_edit.toPlainText()
+        try:
+            self.data = json.loads(json_text)
+            super().accept()
+        except json.JSONDecodeError:
+            QMessageBox.critical(self, "错误", "无效的JSON文本")
+        except Exception as e:
+            QMessageBox.critical(self, "错误", e.__str__())
+
+    def reject(self):
+        super().reject()
 
 
 
@@ -103,8 +156,6 @@ class ModelStandardItemNode(QStandardItem):
         parent.setChild(parent.rowCount() - 1, 2, self.is_required_item)
         parent.setChild(parent.rowCount() - 1, 3, self.cn_name_item)
         parent.setChild(parent.rowCount() - 1, 4, self.description_item)
-
-
 
 class ModelStandardModel(QStandardItemModel):
     def __init__(self):

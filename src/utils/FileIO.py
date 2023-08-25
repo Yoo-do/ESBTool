@@ -1,3 +1,7 @@
+"""
+IO层，负责为Data层的数据类提供IO操作
+"""
+
 import json
 import os
 import path_lead
@@ -39,7 +43,6 @@ class ProjIO:
             os.mkdir(os.path.join(proj_path, 'apis'))
             os.mkdir(os.path.join(proj_path, 'models'))
 
-
     @staticmethod
     def get_proj_names():
         """
@@ -67,8 +70,6 @@ class ProjIO:
             models.append({'model_name': model.split('.')[0], 'model': data})
 
         return models
-
-
 
     @staticmethod
     def add_model(proj_name, model_name):
@@ -101,6 +102,7 @@ class ProjIO:
 
         if os.path.exists(model_file_path):
             os.remove(model_file_path)
+
     @staticmethod
     def rename_model(proj_name, source_model_name, target_model_name):
         """
@@ -136,11 +138,11 @@ class ProjIO:
             json.dump(data, f, ensure_ascii=False)
 
 
-
 if __name__ == '__main__':
     pass
     # print(ProjIO.get_models('检查系统'))
     # ProjIO.add_model('检查系统', 'test2')
     # ProjIO.delete_model('检查系统', 'test2')
     # ProjIO.rename_model('检查系统', 'test2', 'test')
-    ProjIO.rewrite_model('检查系统', 'test', {"type": "object", "properties": {"id": {"type": "string", "tittle": "消息id", "description": "", "require": True}}, "required": []})
+    ProjIO.rewrite_model('检查系统', 'test', {"type": "object", "properties": {
+        "id": {"type": "string", "tittle": "消息id", "description": "", "require": True}}, "required": []})
