@@ -91,9 +91,9 @@ class Model:
         FileIO.ProjIO.rename_model(self.proj_name, self.model_name, target_name)
         self.model_name = target_name
 
-class Api(Model):
+class Api():
     def __init__(self, model_name: str, model: dict):
-        super().__init__(model_name, model)
+        pass
 
 
 class Proj:
