@@ -13,6 +13,7 @@ class Model:
     """
     数据模型类
     """
+
     def __init__(self, proj_name: str, model_name: str, model: dict):
         self.proj_name = proj_name
         self.model_name = model_name
@@ -24,7 +25,6 @@ class Model:
             return True
         except jsonschema.ValidationError as e:
             raise Exception(e.path).__str__() + ' : ' + e.message.__str__()
-
 
     @staticmethod
     def generate_jsonschema(json_data):
@@ -73,9 +73,6 @@ class Model:
         self.model = self.generate_jsonschema(data)
         self.save(self.model)
 
-
-
-
     def save(self, data: dict):
         """
         重写model的值，并保存文件
@@ -91,8 +88,21 @@ class Model:
         FileIO.ProjIO.rename_model(self.proj_name, self.model_name, target_name)
         self.model_name = target_name
 
-class Api():
-    def __init__(self, model_name: str, model: dict):
+
+    def delete(self):
+        """
+        删除model文件
+        :return:
+        """
+        FileIO.ProjIO.delete_model(self.proj_name, self.model_name)
+
+
+
+class Api:
+    """
+    接口对应数据类
+    """
+    def __init__(self, api_name: str):
         pass
 
 
@@ -109,9 +119,29 @@ class Proj:
         """
         获取全部模型
         """
+        self.models.clear()
         models = FileIO.ProjIO.get_models(self.proj_name)
         for model in models:
             self.models.append(Model(self.proj_name, model['model_name'], model['model']))
+
+    def delete_model(self, model_name):
+        """
+        删除项目中的模型
+        :param model_name:
+        :return:
+        """
+        target_model = [model for model in self.models if model.model_name == model_name][0]
+        self.models.remove(target_model)
+        target_model.delete()
+
+    def add_model(self, model_name):
+        """
+        项目中新增模型
+        :param model_name:
+        :return:
+        """
+        FileIO.ProjIO.add_model(self.proj_name, model_name)
+        self.fresh_models()
 
     def fresh_apis(self):
         """

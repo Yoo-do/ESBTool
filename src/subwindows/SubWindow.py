@@ -59,7 +59,7 @@ class ModelWindow(QWidget):
         main_layout.addLayout(model_list_layout)
         main_layout.setStretchFactor(model_list_layout, 1)
 
-        self.model_list = QListWidget(self)
+        self.model_list = DiyWidgets.ModelLisTWidget(self)
         self.model_list.itemClicked.connect(self.model_selected_event)
         model_list_layout.addWidget(self.model_list)
 
@@ -67,10 +67,8 @@ class ModelWindow(QWidget):
         model_list_layout.addLayout(model_list_button_layout)
 
         self.model_add_button = QPushButton('新增', self)
+        self.model_add_button.clicked.connect(self.model_list.model_item_add_event)
         model_list_button_layout.addWidget(self.model_add_button)
-
-        self.model_delete_button = QPushButton('删除', self)
-        model_list_button_layout.addWidget(self.model_delete_button)
 
         # 模型细节
 
@@ -106,6 +104,8 @@ class ModelWindow(QWidget):
 
     def fresh_data(self):
         self.model_list.clear()
+        if self.tree_standard_model is not None:
+            self.tree_standard_model.clear()
 
         if self.main_window.curr_proj is not None:
             models = [model.model_name for model in self.main_window.curr_proj.models]
