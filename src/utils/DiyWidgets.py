@@ -69,13 +69,13 @@ class ModelLisTWidget(QListWidget):
         if item is not None:
             rename_action = QAction("重命名")
             rename_action.triggered.connect(self.model_item_rename_event)
-            delete_action = QAction("删除")
+            delete_action = QAction("删除模型")
             delete_action.triggered.connect(self.model_item_delete_event)
             menu.addAction(rename_action)
             menu.addAction(delete_action)
 
         else:
-            add_action = QAction("新增")
+            add_action = QAction("新增模型")
             add_action.triggered.connect(self.model_item_add_event)
             menu.addAction(add_action)
 
@@ -142,10 +142,22 @@ class DataTypeCombox(QStyledItemDelegate):
     """
     数据类型下拉框
     """
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        self.data_types = Data.ModelDataTypes
+
 
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
-        editor.addItems(Data.ModelDataTypes)
+        editor.addItems(self.data_types)
+
+        # 初始化索引值
+        # index = self.data_types[editor.currentText()]
+        # editor.setCurrentIndex(index)
+        self.curr_data_type = editor.currentText()
+
+        editor.currentIndexChanged.connect(self.selection_changed_event)
         return editor
 
     def setEditorData(self, editor, index):
@@ -155,6 +167,15 @@ class DataTypeCombox(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
+
+    def selection_changed_event(self, index):
+        """
+        下拉选项改变后的事件
+        """
+        old_data_type = self.curr_data_type
+        self.curr_data_type = self.data_types[index]
+        print("数据类型: " + old_data_type + ' -> ' + self.curr_data_type)
+        pass
 
 
 class ModelDialog(QDialog):
@@ -226,6 +247,7 @@ class ModelStandardItemDir(QStandardItem):
 
     def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
         super().__init__(dir_name)
+
         self.data_type_item = QStandardItem(data_type)
         tree_view.setItemDelegateForColumn(1, DataTypeCombox())
 

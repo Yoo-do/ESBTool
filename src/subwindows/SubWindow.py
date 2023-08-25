@@ -66,7 +66,7 @@ class ModelWindow(QWidget):
         model_list_button_layout = QBoxLayout(QBoxLayout.LeftToRight)
         model_list_layout.addLayout(model_list_button_layout)
 
-        self.model_add_button = QPushButton('新增', self)
+        self.model_add_button = QPushButton('新增模型', self)
         self.model_add_button.clicked.connect(self.model_list.model_item_add_event)
         model_list_button_layout.addWidget(self.model_add_button)
 
