@@ -1,9 +1,10 @@
 import json
 
 from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, \
-    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, QPushButton, QAction,QMenu
+    QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
+    QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QModelIndex, QPoint, QIODevice, QDataStream
 
 from src.utils import Data
 
@@ -37,6 +38,7 @@ class ModelLisTWidget(QListWidget):
     """
     模型列表窗体类
     """
+
     def __init__(self, parent):
         super().__init__(parent=parent)
 
@@ -82,6 +84,7 @@ class ModelLisTWidget(QListWidget):
         action = menu.exec_(self.mapToGlobal(pos))
 
     """事件"""
+
     def model_item_rename_event(self):
         """
         重命名模型事件
@@ -95,7 +98,8 @@ class ModelLisTWidget(QListWidget):
 
         target_model_name, ok = QInputDialog.getText(self, '重命名', '请输入新的名称:', text=curr_model_name)
         if ok:
-            if target_model_name not in [model.model_name for model in self.curr_proj.models if model.model_name != curr_model_name]:
+            if target_model_name not in [model.model_name for model in self.curr_proj.models if
+                                         model.model_name != curr_model_name]:
                 curr_model.rename(target_model_name)
             else:
                 QMessageBox.critical(self, '错误消息', '该名称已重复')
@@ -138,42 +142,46 @@ class ModelLisTWidget(QListWidget):
 
         self.parent_fresh_data()
 
+
 class DataTypeCombox(QStyledItemDelegate):
     """
     数据类型下拉框
     """
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         self.data_types = Data.ModelDataTypes
 
-
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
         editor.addItems(self.data_types)
 
-        # 初始化索引值
-        # index = self.data_types[editor.currentText()]
-        # editor.setCurrentIndex(index)
-        self.curr_data_type = editor.currentText()
+        # 当前数据类型值
+        self.curr_data_type = index.model().data(index, role=Qt.DisplayRole)
+        target_index = self.data_types.index(self.curr_data_type)
+        editor.setCurrentIndex(target_index)
 
-        editor.currentIndexChanged.connect(self.selection_changed_event)
+        print(self.curr_data_type, ' created')
+
+        editor.currentTextChanged.connect(self.selection_changed_event)
         return editor
 
     def setEditorData(self, editor, index):
         value = index.model().data(index, role=Qt.DisplayRole)
-        editor.setCurrentText(value)
+        target_index = self.data_types.index(value)
+        editor.setCurrentIndex(target_index)
 
     def setModelData(self, editor, model, index):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
-    def selection_changed_event(self, index):
+    def selection_changed_event(self, curr_data_type):
         """
         下拉选项改变后的事件
         """
         old_data_type = self.curr_data_type
-        self.curr_data_type = self.data_types[index]
+        self.curr_data_type = curr_data_type
         print("数据类型: " + old_data_type + ' -> ' + self.curr_data_type)
         pass
 
@@ -182,7 +190,6 @@ class ModelDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle("导入模型")
-
 
         self.text_edit = QTextEdit()
         self.text_edit.setPlaceholderText("请输入JSON文本")
@@ -201,7 +208,6 @@ class ModelDialog(QDialog):
         layout.addWidget(self.format_button)
         layout.addWidget(self.ok_button)
         layout.addWidget(self.cancel_button)
-
 
     def format_json_event(self):
         """
@@ -230,14 +236,95 @@ class ModelDialog(QDialog):
         super().reject()
 
 
-
 class ModelTreeView(QTreeView):
     """
     模型展示窗体
+    实现了拖拽功能
     """
 
     def __init__(self, parent):
         super().__init__(parent=parent)
+
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDefaultDropAction(Qt.MoveAction)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.customContextMenuRequested.connect(self.right_clicked_menu)
+
+
+
+    def setModel(self, model):
+        super().setModel(model)
+        # 选中结点信息展示
+        self.selectionModel().currentChanged.connect(self.show_node_info)
+
+    def show_info(self, info: str):
+        """
+        展示信息
+        """
+        if self.parent() is not None and hasattr(self.parent(), 'main_window') and isinstance(self.parent().main_window, QMainWindow):
+            self.parent().main_window.show_status_info(info)
+
+
+    def right_clicked_menu(self, pos):
+        """
+        右击菜单栏
+        """
+        index = self.indexAt(pos)
+        if index.isValid():
+            menu = QMenu()
+            add_action = QAction("新增节点", menu)
+            delete_action = QAction("删除节点", menu)
+            # add_action.triggered.connect(lambda: self.add_node(index))
+            # delete_action.triggered.connect(lambda: self.delete_node(index))
+            menu.addAction(add_action)
+            menu.addAction(delete_action)
+            menu.exec_(self.viewport().mapToGlobal(pos))
+    
+    def startDrag(self, supported_action):
+        """
+        重写开始拖拽方法
+        禁用部分特殊结点的拖拽功能
+        """
+        index = self.currentIndex()
+        parent = self.model().itemFromIndex(index).parent()
+
+        if parent is None:
+            # 根节点禁止拖拽
+            return
+
+        column_name = parent.child(index.row(), 0).data(role=Qt.DisplayRole)
+        data_type = parent.child(index.row(), 1).data(role=Qt.DisplayRole)
+
+
+        if column_name == "items" and data_type == 'object':
+            # 数组主结点不允许拖动
+            return
+        else:
+            super().startDrag(supported_action)
+    
+    def show_node_info(self, current, previous):
+        """
+        信息展示
+        """
+        result = '父级:[{}] '.format(str(current.parent().data()))
+        result += '当前选中:[(行{},列{})] '.format(current.row(), current.column())
+
+        name = ''
+        info = ''
+        if current.column() == 0:
+            name = str(current.data())
+            info = str(current.sibling(current.row(), 1).data())
+        else:
+            name = str(current.sibling(current.row(), 0).data())
+            info = str(current.data())
+
+        result += '名称:[{}]  类型:[{}]'.format(name, info)
+
+        self.show_info(result)
 
 
 class ModelStandardItemDir(QStandardItem):
@@ -283,6 +370,7 @@ class ModelStandardItemNode(QStandardItem):
         parent.setChild(parent.rowCount() - 1, 3, self.cn_name_item)
         parent.setChild(parent.rowCount() - 1, 4, self.description_item)
 
+
 class ModelStandardModel(QStandardItemModel):
     def __init__(self):
         super().__init__()
@@ -301,8 +389,6 @@ class ModelStandardModel(QStandardItemModel):
             properties, required = self.generate_json(root, True)
             result = {"type": data_type, "properties": properties, "required": required}
             return result
-
-
 
     def generate_json(self, item: QStandardItem, is_object=False):
         """
@@ -333,7 +419,8 @@ class ModelStandardModel(QStandardItemModel):
                     tittle = None if item.child(index, 3) is None else item.child(index, 3).text()
                     description = None if item.child(index, 4) is None else item.child(index, 4).text()
                     if item.child(index).rowCount() == 0:
-                        result.update({col_name: {"type": data_type, "tittle": tittle, "description": description, "require": require}})
+                        result.update({col_name: {"type": data_type, "tittle": tittle, "description": description,
+                                                  "require": require}})
                     else:
                         if data_type == 'array':
                             # array类型的默认加入required
@@ -344,7 +431,8 @@ class ModelStandardModel(QStandardItemModel):
                             result.update({col_name: res})
                         elif data_type == 'object':
                             child_properties, child_required = self.generate_json(child, True)
-                            result.update({col_name: {"type": data_type, "properties": child_properties, "required": child_required}})
+                            result.update({col_name: {"type": data_type, "properties": child_properties,
+                                                      "required": child_required}})
 
             if is_object:
                 return result, required
@@ -353,4 +441,3 @@ class ModelStandardModel(QStandardItemModel):
 
         except Exception as e:
             raise Exception("节点: ", item.child(0, 0).text(), "报错：", e.__str__())
-

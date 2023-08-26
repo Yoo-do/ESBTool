@@ -44,10 +44,12 @@ class Interface(QMainWindow):
         self.setWindowTitle(self.window_tittle)
         self.setWindowIcon(QIcon(QPixmap(path_lead.get_path(r'\icon\ESBTool.png'))))
 
+
         # 菜单栏初始化
         self.menubar_init()
 
         self.show_index_window()
+
         self.show()
 
     def menubar_init(self):
@@ -113,6 +115,19 @@ class Interface(QMainWindow):
         控制按钮是否可用
         """
         self.model_action.setEnabled(a0)
+
+
+    def show_status_info(self, info: str):
+        """
+        展示提示消息
+        """
+        self.statusBar().showMessage(info)
+
+    def clear_status_info(self):
+        """
+        清除提示消息
+        """
+        self.setStatusTip('')
 
     """事件"""
 

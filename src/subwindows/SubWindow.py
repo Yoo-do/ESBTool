@@ -5,6 +5,8 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from enum import Enum
 from src.utils import Data, DiyWidgets
 
+from src.Interface import Interface
+
 
 class SubWindowType(Enum):
     """
@@ -19,7 +21,7 @@ class SubWindowType(Enum):
 
 
 class IndexWindow(QWidget):
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: Interface):
         super().__init__(main_window)
         self.main_window = main_window
 
@@ -42,7 +44,7 @@ class IndexWindow(QWidget):
 
 
 class ModelWindow(QWidget):
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: Interface):
         super().__init__(main_window)
         self.main_window = main_window
 
@@ -115,6 +117,10 @@ class ModelWindow(QWidget):
             models = [model.model_name for model in self.main_window.curr_proj.models]
             self.model_list.addItems(models)
 
+
+        # 提示框删除
+        self.main_window.clear_status_info()
+
     def fresh_model_detail(self, data: dict):
         """
         刷新节点数据
@@ -125,11 +131,11 @@ class ModelWindow(QWidget):
         self.tree_standard_model = DiyWidgets.ModelStandardModel()
         self.model_detial_tree.setModel(self.tree_standard_model)
         self.model_detial_tree.header().resizeSection(0, 300)
-        self.model_detial_tree.selectionModel().currentChanged.connect(self.onCurrentChanged)
 
         self.generate_tree_model(self.tree_standard_model, data, '根节点')
 
-    def generate_tree_model(self, parent, data, name='Items'):
+
+    def generate_tree_model(self, parent, data, name='items'):
         try:
             if data['type'] == 'object':
                 root = DiyWidgets.ModelStandardItemDir(self.model_detial_tree, parent, name, data['type'])
@@ -161,26 +167,9 @@ class ModelWindow(QWidget):
         self.fresh_model_detail(data)
         self.model_detial_tree.expandAll()
 
-    def onCurrentChanged(self, current, previous):
-        """
-        信息展示
-        """
+        self.main_window.show_status_info(f'已选中模型[{model_name}]')
 
-        txt = '父级:[{}] '.format(str(current.parent().data()))
-        txt += '当前选中:[(行{},列{})] '.format(current.row(), current.column())
 
-        name = ''
-        info = ''
-        if current.column() == 0:
-            name = str(current.data())
-            info = str(current.sibling(current.row(), 1).data())
-        else:
-            name = str(current.sibling(current.row(), 0).data())
-            info = str(current.data())
-
-        txt += '名称:[{}]  信息:[{}]'.format(name, info)
-
-        self.main_window.statusBar().showMessage(txt)
 
 
     def model_save_event(self):
@@ -188,6 +177,10 @@ class ModelWindow(QWidget):
         model_name = self.model_list.currentItem().text()
         curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
         curr_model.save(self.tree_standard_model.__jsonschema__())
+
+
+        # 信息展示
+        self.main_window.show_status_info(f'模型[{model_name}]已保存')
 
 
     def model_import_event(self):
@@ -219,7 +212,7 @@ class SubWindow:
     子窗口管理类
     """
 
-    def __init__(self, main_window: QMainWindow):
+    def __init__(self, main_window: Interface):
         self.main_window = main_window
         self.stack_widget = QStackedWidget(main_window)
         main_window.setCentralWidget(self.stack_widget)
