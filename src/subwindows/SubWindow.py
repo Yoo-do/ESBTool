@@ -138,15 +138,17 @@ class ModelWindow(QWidget):
     def generate_tree_model(self, parent, data, name='items'):
         try:
             if data['type'] == 'object':
-                root = DiyWidgets.ModelStandardItemDir(self.model_detial_tree, parent, name, data['type'])
+                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                                                 data.get('tittle'), data.get('description'))
                 for key, value in data['properties'].items():
                     self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                root = DiyWidgets.ModelStandardItemDir(self.model_detial_tree, parent, name, data['type'])
+                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                                                 data.get('tittle'), data.get('description'))
                 self.generate_tree_model(root, data['items'])
             else:
-                DiyWidgets.ModelStandardItemNode(self.model_detial_tree, parent, name, data['type'], data['require'],
-                                                 data['tittle'], data['description'])
+                DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                                                 data.get('tittle'), data.get('description'))
         except Exception as e:
             raise Exception('节点:' + name + ' ' + e.__str__())
 
@@ -157,15 +159,16 @@ class ModelWindow(QWidget):
         模型选中事件
         :return:
         """
-        # 更新按钮状态
-        self.model_import_button.setEnabled(True)
-        self.model_save_button.setEnabled(True)
 
         model_name = self.model_list.currentItem().text()
         data = [model.model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
 
         self.fresh_model_detail(data)
         self.model_detial_tree.expandAll()
+
+        # 更新按钮状态
+        self.model_import_button.setEnabled(True)
+        self.model_save_button.setEnabled(True)
 
         self.main_window.show_status_info(f'已选中模型[{model_name}]')
 

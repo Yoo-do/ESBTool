@@ -154,6 +154,10 @@ class DataTypeCombox(QStyledItemDelegate):
         self.data_types = Data.ModelDataTypes
 
     def createEditor(self, parent, option, index):
+        """
+        创建
+        """
+
         editor = QComboBox(parent)
         editor.addItems(self.data_types)
 
@@ -162,17 +166,22 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(self.curr_data_type)
         editor.setCurrentIndex(target_index)
 
-        print(self.curr_data_type, ' created')
 
         editor.currentTextChanged.connect(self.selection_changed_event)
         return editor
 
     def setEditorData(self, editor, index):
+        """
+        编辑
+        """
         value = index.model().data(index, role=Qt.DisplayRole)
         target_index = self.data_types.index(value)
         editor.setCurrentIndex(target_index)
 
     def setModelData(self, editor, model, index):
+        """
+        回写
+        """
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
@@ -254,8 +263,6 @@ class ModelTreeView(QTreeView):
 
         self.customContextMenuRequested.connect(self.right_clicked_menu)
 
-
-
     def setModel(self, model):
         super().setModel(model)
         # 选中结点信息展示
@@ -265,25 +272,61 @@ class ModelTreeView(QTreeView):
         """
         展示信息
         """
-        if self.parent() is not None and hasattr(self.parent(), 'main_window') and isinstance(self.parent().main_window, QMainWindow):
+        if self.parent() is not None and hasattr(self.parent(), 'main_window') and isinstance(self.parent().main_window,
+                                                                                              QMainWindow):
             self.parent().main_window.show_status_info(info)
-
 
     def right_clicked_menu(self, pos):
         """
         右击菜单栏
         """
         index = self.indexAt(pos)
+        parent: ModelStandardItem = self.model().itemFromIndex(index).parent()
+
         if index.isValid():
             menu = QMenu()
-            add_action = QAction("新增节点", menu)
+            add_child_action = QAction("新增子节点", menu)
+            add_prenode_action = QAction('在前面插入节点', menu)
+            add_postnode_action = QAction('在后面插入节点', menu)
             delete_action = QAction("删除节点", menu)
-            # add_action.triggered.connect(lambda: self.add_node(index))
-            # delete_action.triggered.connect(lambda: self.delete_node(index))
-            menu.addAction(add_action)
-            menu.addAction(delete_action)
+
+            # 绑定事件
+            add_child_action.triggered.connect(self.add_child_node)
+            delete_action.triggered.connect(self.delete_node)
+
+            # 按节点分配菜单按钮
+            if parent is None:
+                # 根节点只有删除按钮
+                menu.addAction(delete_action)
+            elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) == 'object':
+
+                # object 类型节点
+                # 区分一下数组中的object
+
+                parent_data_type = parent.get_data_type()
+                if parent_data_type == 'array':
+                    menu.addAction(add_child_action)
+                else:
+                    menu.addAction(add_child_action)
+                    menu.addAction(add_prenode_action)
+                    menu.addAction(add_postnode_action)
+                    menu.addAction(delete_action)
+
+            elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) == 'array':
+                # array 类型节点
+                menu.addAction(add_prenode_action)
+                menu.addAction(add_postnode_action)
+                menu.addAction(delete_action)
+
+            elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) not in ['object', 'array']:
+                # 普通节点
+                menu.addAction(add_prenode_action)
+                menu.addAction(add_postnode_action)
+                menu.addAction(delete_action)
+
+
             menu.exec_(self.viewport().mapToGlobal(pos))
-    
+
     def startDrag(self, supported_action):
         """
         重写开始拖拽方法
@@ -299,13 +342,12 @@ class ModelTreeView(QTreeView):
         column_name = parent.child(index.row(), 0).data(role=Qt.DisplayRole)
         data_type = parent.child(index.row(), 1).data(role=Qt.DisplayRole)
 
-
         if column_name == "items" and data_type == 'object':
             # 数组主结点不允许拖动
             return
         else:
             super().startDrag(supported_action)
-    
+
     def show_node_info(self, current, previous):
         """
         信息展示
@@ -325,50 +367,89 @@ class ModelTreeView(QTreeView):
         result += '名称:[{}]  类型:[{}]'.format(name, info)
 
         self.show_info(result)
+    def delete_node(self):
+        """
+        删除结点
+        """
+        index = self.currentIndex()
+        if index.isValid():
+            self.model().removeRow(index.row(), index.parent())
+
+    def add_child_node(self):
+        """
+        新增子结点
+        """
+        index = self.currentIndex()
+        curr_item = self.model().itemFromIndex(index)
+        if index.isValid():
+            # 执行新增节点的操作
+            ModelStandardItem(self, curr_item, '新结点', 'string')
 
 
-class ModelStandardItemDir(QStandardItem):
-    """
-    模型文件类
-    """
-
-    def __init__(self, tree_view: QTreeView, parent: QStandardItem | QStandardItemModel, dir_name, data_type):
-        super().__init__(dir_name)
-
-        self.data_type_item = QStandardItem(data_type)
-        tree_view.setItemDelegateForColumn(1, DataTypeCombox())
-
-        parent.appendRow(self)
-        if isinstance(parent, self.__class__):
-            parent.setChild(parent.rowCount() - 1, 1, self.data_type_item)
-        elif isinstance(parent, ModelStandardModel):
-            parent.setItem(parent.rowCount() - 1, 1, self.data_type_item)
-
-
-class ModelStandardItemNode(QStandardItem):
+class ModelStandardItem(QStandardItem):
     """
     模型节点类
     """
 
-    def __init__(self, tree_view: QTreeView, parent: QStandardItem, node_name, data_type,
-                 is_required: bool, cn_name, description):
-        super().__init__(node_name)
-        self.data_type_item = QStandardItem(data_type)
+    def __init__(self, tree_view: QTreeView, parent: QStandardItemModel | QStandardItem, item_name: str, data_type: str,
+                 is_required: bool, cn_name: str = None, description: str = None):
+        """
+        非object、array类型,则带kwargs: is_required: bool, cn_name: str, description: str
+        """
 
-        self.is_required_item = QStandardItem()
-        self.is_required_item.setCheckable(True)
-        self.is_required_item.setCheckState(Qt.Checked if is_required else Qt.Unchecked)
+        super().__init__(item_name)
+        self.tree_view = tree_view
 
-        self.cn_name_item = QStandardItem(cn_name)
-        self.description_item = QStandardItem(description)
+        if data_type in ['object', 'array']:
+            self.dir_node_init(parent, data_type, cn_name, description)
+        else:
+            self.leaf_node_init(parent, data_type, is_required, cn_name, description)
 
-        tree_view.setItemDelegateForColumn(1, DataTypeCombox())
+    def get_data_type(self):
+        if self.parent() is not None:
+            index = self.index()
+            return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
+
+    def dir_node_init(self, parent, data_type: str, cn_name: str, description: str):
+        """
+        目录结点初始化 该节点都是必须，所以不设置必须选项
+        """
+        data_type_item = QStandardItem(data_type)
+        self.tree_view.setItemDelegateForColumn(1, DataTypeCombox())
+
+        cn_name_item = QStandardItem(cn_name)
+        description_item = QStandardItem(description)
 
         parent.appendRow(self)
-        parent.setChild(parent.rowCount() - 1, 1, self.data_type_item)
-        parent.setChild(parent.rowCount() - 1, 2, self.is_required_item)
-        parent.setChild(parent.rowCount() - 1, 3, self.cn_name_item)
-        parent.setChild(parent.rowCount() - 1, 4, self.description_item)
+        if isinstance(parent, self.__class__):
+            parent.setChild(parent.rowCount() - 1, 1, data_type_item)
+            parent.setChild(parent.rowCount() - 1, 3, cn_name_item)
+            parent.setChild(parent.rowCount() - 1, 4, description_item)
+        elif isinstance(parent, ModelStandardItem | QStandardItemModel):
+            parent.setItem(parent.rowCount() - 1, 1, data_type_item)
+            parent.setItem(parent.rowCount() - 1, 3, cn_name_item)
+            parent.setItem(parent.rowCount() - 1, 4, description_item)
+
+
+    def leaf_node_init(self, parent, data_type: str, is_required: bool, cn_name: str, description: str):
+        """
+        叶子结点初始化
+        """
+        data_type_item = QStandardItem(data_type)
+        self.tree_view.setItemDelegateForColumn(1, DataTypeCombox())
+
+        is_required_item = QStandardItem()
+        is_required_item.setCheckable(True)
+        is_required_item.setCheckState(Qt.Checked if is_required else Qt.Unchecked)
+
+        cn_name_item = QStandardItem(cn_name)
+        description_item = QStandardItem(description)
+
+        parent.appendRow(self)
+        parent.setChild(parent.rowCount() - 1, 1, data_type_item)
+        parent.setChild(parent.rowCount() - 1, 2, is_required_item)
+        parent.setChild(parent.rowCount() - 1, 3, cn_name_item)
+        parent.setChild(parent.rowCount() - 1, 4, description_item)
 
 
 class ModelStandardModel(QStandardItemModel):
