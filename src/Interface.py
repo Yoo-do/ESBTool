@@ -1,13 +1,14 @@
 """
 全部的窗体类
 """
+import logging
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QAction, QInputDialog, QMessageBox, QMenu, QDialog
 from PyQt5.Qt import QIcon, QPixmap
 import sys
 import path_lead
 
-from utils import FileIO, Data, DiyWidgets
+from utils import FileIO, Data, DiyWidgets, Log
 from subwindows import SubWindow
 
 
@@ -51,6 +52,8 @@ class Interface(QMainWindow):
         self.show_index_window()
 
         self.show()
+
+        Log.logger.info('主界面初始化完成')
 
     def menubar_init(self):
         """
@@ -129,6 +132,9 @@ class Interface(QMainWindow):
         """
         self.setStatusTip('')
 
+        # 日志
+        logging.debug('清除了status信息')
+
     """事件"""
 
     def open_proj_event(self):
@@ -138,10 +144,12 @@ class Interface(QMainWindow):
             selected_proj = [item.text() for item in dialog.list_widget.selectedItems()][0]
             self.set_current_proj(selected_proj)
 
-
             # 切换项目的时候刷新全部窗体数据，并切换到到主页
             self.sub_window_object.fresh_all_data()
             self.show_index_window()
+
+            # 日志
+            Log.logger.info(f'进入项目[{selected_proj}]')
 
     def add_proj_event(self):
         """
@@ -151,6 +159,9 @@ class Interface(QMainWindow):
             proj_name, ok = QInputDialog.getText(self, '新增项目', '项目名称')
             if ok:
                 FileIO.ProjIO.add_proj(proj_name)
+
+                # 日志
+                Log.logger.info(f'新增项目[{proj_name}]')
 
         except Exception as e:
             QMessageBox.critical(self, '错误消息', e.__str__(), QMessageBox.Ok)

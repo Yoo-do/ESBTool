@@ -1,0 +1,2 @@
+[2023-08-28 23:20:04,261] INFO: file: DiyWidgets.py line: 196 msg: 数据类型: string -> array
+[2023-08-28 23:20:05,604] INFO: file: DiyWidgets.py line: 196 msg: 数据类型: array -> object

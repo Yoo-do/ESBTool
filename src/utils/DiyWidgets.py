@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, 
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QModelIndex, QPoint, QIODevice, QDataStream
 
-from src.utils import Data
+from src.utils import Data, Log
 
 
 class ListDialog(QDialog):
@@ -191,8 +191,10 @@ class DataTypeCombox(QStyledItemDelegate):
         """
         old_data_type = self.curr_data_type
         self.curr_data_type = curr_data_type
-        print("数据类型: " + old_data_type + ' -> ' + self.curr_data_type)
-        pass
+
+
+        Log.logger.info("数据类型: " + old_data_type + ' -> ' + self.curr_data_type)
+
 
 
 class ModelDialog(QDialog):
@@ -421,12 +423,27 @@ class ModelStandardItem(QStandardItem):
         description_item = QStandardItem(description)
 
         parent.appendRow(self)
+
+
+        # object、array类型不允许修改类型
         if isinstance(parent, self.__class__):
             parent.setChild(parent.rowCount() - 1, 1, data_type_item)
+            # 不允许修改类型
+            parent.child(parent.rowCount() - 1, 1).setEditable(False)
+            # 限制编辑
+            parent.setChild(parent.rowCount() - 1, 2, QStandardItem())
+            parent.child(parent.rowCount() - 1, 2).setEditable(False)
+
             parent.setChild(parent.rowCount() - 1, 3, cn_name_item)
             parent.setChild(parent.rowCount() - 1, 4, description_item)
         elif isinstance(parent, ModelStandardItem | QStandardItemModel):
             parent.setItem(parent.rowCount() - 1, 1, data_type_item)
+            # 不允许修改类型
+            parent.item(parent.rowCount() - 1, 1).setEditable(False)
+            # 限制编辑
+            parent.setItem(parent.rowCount() - 1, 2, QStandardItem())
+            parent.item(parent.rowCount() - 1, 2).setEditable(False)
+
             parent.setItem(parent.rowCount() - 1, 3, cn_name_item)
             parent.setItem(parent.rowCount() - 1, 4, description_item)
 
@@ -439,6 +456,7 @@ class ModelStandardItem(QStandardItem):
         self.tree_view.setItemDelegateForColumn(1, DataTypeCombox())
 
         is_required_item = QStandardItem()
+        is_required_item.setEditable(False)
         is_required_item.setCheckable(True)
         is_required_item.setCheckState(Qt.Checked if is_required else Qt.Unchecked)
 

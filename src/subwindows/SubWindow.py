@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QL
 from PyQt5.Qt import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from enum import Enum
-from src.utils import Data, DiyWidgets
+from src.utils import Data, DiyWidgets, Log
 
 from src.Interface import Interface
 
@@ -138,16 +138,16 @@ class ModelWindow(QWidget):
     def generate_tree_model(self, parent, data, name='items'):
         try:
             if data['type'] == 'object':
-                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
                                                  data.get('tittle'), data.get('description'))
                 for key, value in data['properties'].items():
                     self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
                                                  data.get('tittle'), data.get('description'))
                 self.generate_tree_model(root, data['items'])
             else:
-                DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('required'),
+                DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
                                                  data.get('tittle'), data.get('description'))
         except Exception as e:
             raise Exception('节点:' + name + ' ' + e.__str__())
