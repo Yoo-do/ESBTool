@@ -305,8 +305,8 @@ class ModelTreeView(QTreeView):
 
             # 按节点分配菜单按钮
             if parent is None:
-                # 根节点只有删除按钮
-                menu.addAction(delete_action)
+                # 根节点不支持任何操作
+                pass
             elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) == 'object':
 
                 # object 类型节点
@@ -352,7 +352,7 @@ class ModelTreeView(QTreeView):
         data_type = parent.child(index.row(), 1).data(role=Qt.DisplayRole)
 
         if column_name == "items" and data_type == 'object':
-            # 数组主结点不允许拖动
+            # 数组内items结点不允许拖动
             return
         else:
             super().startDrag(supported_action)
@@ -442,14 +442,23 @@ class ModelTreeView(QTreeView):
         在目标节点前面增加节点
         :return:
         """
-        pass
+        index = self.currentIndex()
+        if index.isValid():
+            parent = self.model().itemFromIndex(index).parent()
+            row = index.row()
+            ModelStandardItem(self, parent, '新结点', 'string', True, row=row)
+
 
     def add_post_node_event(self):
         """
         在目标节点后面增加节点
         :return:
         """
-        pass
+        index = self.currentIndex()
+        if index.isValid():
+            parent = self.model().itemFromIndex(index).parent()
+            row = index.row() + 1
+            ModelStandardItem(self, parent, '新结点', 'string', True, row=row)
 
 
 
@@ -460,61 +469,75 @@ class ModelStandardItem(QStandardItem):
     """
 
     def __init__(self, tree_view: QTreeView, parent: QStandardItemModel | QStandardItem, item_name: str, data_type: str,
-                 is_required: bool, cn_name: str = None, description: str = None):
+                 is_required: bool, cn_name: str = None, description: str = None, row: int = None):
         """
         非object、array类型,则带kwargs: is_required: bool, cn_name: str, description: str
         """
 
         super().__init__(item_name)
+        if isinstance(parent, QStandardItemModel):
+            # 根节点限制编辑
+            self.setEditable(False)
+
         self.tree_view = tree_view
 
+        # row 赋值
+        row = parent.rowCount() if row is None else row
+
         if data_type in ['object', 'array']:
-            self.dir_node_init(parent, data_type, cn_name, description)
+            self.dir_node_init(parent, data_type, cn_name, description, row)
         else:
-            self.leaf_node_init(parent, data_type, is_required, cn_name, description)
+            self.leaf_node_init(parent, data_type, is_required, cn_name, description, row)
 
     def get_data_type(self):
         if self.parent() is not None:
             index = self.index()
             return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
 
-    def dir_node_init(self, parent, data_type: str, cn_name: str, description: str):
+    def dir_node_init(self, parent, data_type: str, cn_name: str, description: str, row: int):
         """
         目录结点初始化 该节点都是必须，所以不设置必须选项
         """
+
         data_type_item = QStandardItem(data_type)
         self.tree_view.setItemDelegateForColumn(1, DataTypeCombox())
 
         cn_name_item = QStandardItem(cn_name)
         description_item = QStandardItem(description)
 
-        parent.appendRow(self)
+        if isinstance(parent, QStandardItemModel):
+            # 根节点限制编辑
+            data_type_item.setEditable(False)
+            cn_name_item.setEditable(False)
+            description_item.setEditable(False)
 
+        # 插入到指定行
+        parent.insertRow(row, self)
 
         # object、array类型不允许修改类型
         if isinstance(parent, self.__class__):
-            parent.setChild(parent.rowCount() - 1, 1, data_type_item)
+            parent.setChild(row, 1, data_type_item)
             # 不允许修改类型
-            parent.child(parent.rowCount() - 1, 1).setEditable(False)
+            parent.child(row, 1).setEditable(False)
             # 限制编辑
-            parent.setChild(parent.rowCount() - 1, 2, QStandardItem())
-            parent.child(parent.rowCount() - 1, 2).setEditable(False)
+            parent.setChild(row, 2, QStandardItem())
+            parent.child(row, 2).setEditable(False)
 
-            parent.setChild(parent.rowCount() - 1, 3, cn_name_item)
-            parent.setChild(parent.rowCount() - 1, 4, description_item)
+            parent.setChild(row, 3, cn_name_item)
+            parent.setChild(row, 4, description_item)
         elif isinstance(parent, ModelStandardItem | QStandardItemModel):
-            parent.setItem(parent.rowCount() - 1, 1, data_type_item)
+            parent.setItem(row, 1, data_type_item)
             # 不允许修改类型
-            parent.item(parent.rowCount() - 1, 1).setEditable(False)
+            parent.item(row, 1).setEditable(False)
             # 限制编辑
-            parent.setItem(parent.rowCount() - 1, 2, QStandardItem())
-            parent.item(parent.rowCount() - 1, 2).setEditable(False)
+            parent.setItem(row, 2, QStandardItem())
+            parent.item(row, 2).setEditable(False)
 
-            parent.setItem(parent.rowCount() - 1, 3, cn_name_item)
-            parent.setItem(parent.rowCount() - 1, 4, description_item)
+            parent.setItem(row, 3, cn_name_item)
+            parent.setItem(row, 4, description_item)
 
 
-    def leaf_node_init(self, parent, data_type: str, is_required: bool, cn_name: str, description: str):
+    def leaf_node_init(self, parent, data_type: str, is_required: bool, cn_name: str, description: str, row: int):
         """
         叶子结点初始化
         """
@@ -529,11 +552,15 @@ class ModelStandardItem(QStandardItem):
         cn_name_item = QStandardItem(cn_name)
         description_item = QStandardItem(description)
 
-        parent.appendRow(self)
-        parent.setChild(parent.rowCount() - 1, 1, data_type_item)
-        parent.setChild(parent.rowCount() - 1, 2, is_required_item)
-        parent.setChild(parent.rowCount() - 1, 3, cn_name_item)
-        parent.setChild(parent.rowCount() - 1, 4, description_item)
+        # 插入到指定行
+        parent.insertRow(row, self)
+
+        parent.setChild(row, 1, data_type_item)
+        parent.setChild(row, 2, is_required_item)
+        parent.setChild(row, 3, cn_name_item)
+        parent.setChild(row, 4, description_item)
+
+
 
 
 class ModelStandardModel(QStandardItemModel):
