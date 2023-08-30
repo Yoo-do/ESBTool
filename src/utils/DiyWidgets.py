@@ -166,8 +166,6 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(self.curr_data_type)
         editor.setCurrentIndex(target_index)
 
-
-        editor.currentTextChanged.connect(self.selection_changed_event)
         return editor
 
     def setEditorData(self, editor, index):
@@ -178,22 +176,26 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(value)
         editor.setCurrentIndex(target_index)
 
+
     def setModelData(self, editor, model, index):
         """
         回写
         """
+        tree_view: ModelTreeView = editor.parent().parent()
+        item = tree_view.model().itemFromIndex(index)
+        parent: ModelStandardItem = item.parent()
+
+
+        # 原数据类型
+        source_data_type = parent.child(index.row(), 1).text()
+
+        # 回写模型
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
-    def selection_changed_event(self, curr_data_type):
-        """
-        下拉选项改变后的事件
-        """
-        old_data_type = self.curr_data_type
-        self.curr_data_type = curr_data_type
-
-
-        Log.logger.info("数据类型: " + old_data_type + ' -> ' + self.curr_data_type)
+        if source_data_type != value:
+            # 进行类型转换
+            tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 
 
@@ -333,8 +335,34 @@ class ModelTreeView(QTreeView):
                 menu.addAction(add_postnode_action)
                 menu.addAction(delete_action)
 
-
             menu.exec_(self.viewport().mapToGlobal(pos))
+
+
+    def transfer_data_type(self, index: QModelIndex, source_data_type, target_data_type):
+        """
+        类型转换
+        """
+        parent: ModelStandardItem = self.model().itemFromIndex(index).parent()
+        row = index.row()
+        item_name = parent.child(row, 0).text()
+
+        if source_data_type not in ['object', 'array']:
+            if target_data_type not in ['object', 'array']:
+                # 普通类型转换 无任何额外操作
+                pass
+            elif target_data_type in ['object', 'array']:
+                # 普通类型转换成 object, array 类型
+
+                # 关闭必填类型，并设置为不可编辑
+                parent.setChild(row, 2, QStandardItem())
+                parent.child(row, 2).setEditable(False)
+
+                if target_data_type == 'array':
+                    # 如果是array类型则需要额外增加一个item子节点
+                    curr_item = parent.child(row, 0)
+                    child = ModelStandardItem(self, curr_item, 'items', 'object', True)
+
+        Log.logger.info(f'{item_name}的类型由 [{source_data_type}] 转换成 [{target_data_type}]')
 
     def startDrag(self, supported_action):
         """
@@ -375,7 +403,6 @@ class ModelTreeView(QTreeView):
 
         target_data_type = target_parent.child(traget_index.row(), 1).data(role=Qt.DisplayRole)
 
-
         # 放置节点的限制
         if drop_position == QAbstractItemView.OnItem and target_data_type not in ['object']:
             # 不允许放在非object节点内
@@ -389,7 +416,8 @@ class ModelTreeView(QTreeView):
             target_parent_parent: ModelStandardItem = target_parent.parent()
             if isinstance(target_parent_parent, QStandardItem):
                 # 不满足这个条件的不进行判断
-                target_parent_parent_data_type = target_parent_parent.child(target_parent_index.row(), 1).data(role=Qt.DisplayRole)
+                target_parent_parent_data_type = target_parent_parent.child(target_parent_index.row(), 1).data(
+                    role=Qt.DisplayRole)
                 if target_parent_parent_data_type == 'array':
                     Log.logger.warning(f'不允许直接放置节点到 array 节点里，必须放置到items里')
 
@@ -397,8 +425,6 @@ class ModelTreeView(QTreeView):
                     return
 
         super().dropEvent(event)
-
-
 
     def show_node_info(self, current, previous):
         """
@@ -419,6 +445,7 @@ class ModelTreeView(QTreeView):
         result += '名称:[{}]  类型:[{}]'.format(name, info)
 
         self.show_info(result)
+
     def delete_node_event(self):
         """
         删除结点
@@ -448,6 +475,8 @@ class ModelTreeView(QTreeView):
             row = index.row()
             ModelStandardItem(self, parent, '新结点', 'string', True, row=row)
 
+            # 日志输出
+            Log.logger.debug(f'新增节点')
 
     def add_post_node_event(self):
         """
@@ -460,7 +489,8 @@ class ModelTreeView(QTreeView):
             row = index.row() + 1
             ModelStandardItem(self, parent, '新结点', 'string', True, row=row)
 
-
+            # 日志输出
+            Log.logger.debug(f'新增节点')
 
 
 class ModelStandardItem(QStandardItem):
@@ -490,9 +520,20 @@ class ModelStandardItem(QStandardItem):
             self.leaf_node_init(parent, data_type, is_required, cn_name, description, row)
 
     def get_data_type(self):
+        """
+        获取当前行的类型
+        """
         if self.parent() is not None:
             index = self.index()
             return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
+
+    def get_column_name(self):
+        """
+        获取当前行的名称
+        """
+        if self.parent() is not None:
+            index = self.index()
+            return self.parent().child(index.row(), 0).data(role=Qt.DisplayRole)
 
     def dir_node_init(self, parent, data_type: str, cn_name: str, description: str, row: int):
         """
@@ -535,7 +576,6 @@ class ModelStandardItem(QStandardItem):
 
             parent.setItem(row, 3, cn_name_item)
             parent.setItem(row, 4, description_item)
-
 
     def leaf_node_init(self, parent, data_type: str, is_required: bool, cn_name: str, description: str, row: int):
         """

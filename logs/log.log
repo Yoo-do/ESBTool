@@ -1,2 +1,2 @@
-[2023-08-30 22:17:23,007] INFO: file: Interface.py line: 56 msg: 主界面初始化完成
-[2023-08-30 22:17:25,456] INFO: file: Interface.py line: 152 msg: 进入项目[检查系统]
+[2023-08-30 23:24:32,407] INFO: file: DiyWidgets.py line: 471 msg: idtypename的类型由 [string] 转换成 [array]
+NFO: file: Interface.py line: 152 msg: 进入项目[检查系统]
