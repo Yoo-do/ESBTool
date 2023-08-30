@@ -3,7 +3,7 @@ import json
 from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, \
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
     QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QDropEvent
 from PyQt5.QtCore import Qt, QModelIndex, QPoint, QIODevice, QDataStream
 
 from src.utils import Data, Log
@@ -356,6 +356,49 @@ class ModelTreeView(QTreeView):
             return
         else:
             super().startDrag(supported_action)
+
+    def dropEvent(self, event):
+
+        drop_position = self.dropIndicatorPosition()
+
+        traget_index = self.indexAt(event.pos())
+        target_parent = self.model().itemFromIndex(traget_index).parent()
+
+        if target_parent is None:
+            if drop_position in [QAbstractItemView.AboveItem, QAbstractItemView.BelowItem]:
+                Log.logger.warning('禁止拖拽到根节点外')
+                event.ignore()
+                return
+            elif drop_position == QAbstractItemView.OnItem:
+                super().dropEvent(event)
+                return
+
+        target_data_type = target_parent.child(traget_index.row(), 1).data(role=Qt.DisplayRole)
+
+
+        # 放置节点的限制
+        if drop_position == QAbstractItemView.OnItem and target_data_type not in ['object']:
+            # 不允许放在非object节点内
+            Log.logger.warning(f'不允许放置在 {target_data_type} 节点内')
+            event.ignore()
+            return
+        elif drop_position in [QAbstractItemView.AboveItem, QAbstractItemView.BelowItem]:
+            # 拖拽到上下侧时 禁止直接拖到数组的节点里，必须拖拽到items里面
+
+            target_parent_index = target_parent.index()
+            target_parent_parent: ModelStandardItem = target_parent.parent()
+            if isinstance(target_parent_parent, QStandardItem):
+                # 不满足这个条件的不进行判断
+                target_parent_parent_data_type = target_parent_parent.child(target_parent_index.row(), 1).data(role=Qt.DisplayRole)
+                if target_parent_parent_data_type == 'array':
+                    Log.logger.warning(f'不允许直接放置节点到 array 节点里，必须放置到items里')
+
+                    event.ignore()
+                    return
+
+        super().dropEvent(event)
+
+
 
     def show_node_info(self, current, previous):
         """
