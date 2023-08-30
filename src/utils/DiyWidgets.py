@@ -385,7 +385,23 @@ class ModelTreeView(QTreeView):
         curr_item = self.model().itemFromIndex(index)
         if index.isValid():
             # 执行新增节点的操作
-            ModelStandardItem(self, curr_item, '新结点', 'string')
+            ModelStandardItem(self, curr_item, '新结点', 'string', True)
+
+    def add_pre_node(self):
+        """
+        在目标节点前面增加节点
+        :return:
+        """
+        pass
+
+    def add_post_node(self):
+        """
+        在目标节点后面增加节点
+        :return:
+        """
+        pass
+
+
 
 
 class ModelStandardItem(QStandardItem):

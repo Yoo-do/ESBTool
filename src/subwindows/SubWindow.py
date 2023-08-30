@@ -117,7 +117,6 @@ class ModelWindow(QWidget):
             models = [model.model_name for model in self.main_window.curr_proj.models]
             self.model_list.addItems(models)
 
-
         # 提示框删除
         self.main_window.clear_status_info()
 
@@ -134,21 +133,24 @@ class ModelWindow(QWidget):
 
         self.generate_tree_model(self.tree_standard_model, data, '根节点')
 
-
     def generate_tree_model(self, parent, data, name='items'):
         try:
+
+            # 生成节点
+            root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'),
+                                                data.get('require'),
+                                                data.get('tittle'), data.get('description'))
+
+            # 判断是否有子节点需要生成
             if data['type'] == 'object':
-                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
-                                                 data.get('tittle'), data.get('description'))
                 for key, value in data['properties'].items():
                     self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
-                                                 data.get('tittle'), data.get('description'))
+                # 数组类型默认增加一个items
                 self.generate_tree_model(root, data['items'])
             else:
-                DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'), data.get('require'),
-                                                 data.get('tittle'), data.get('description'))
+                pass
+
         except Exception as e:
             raise Exception('节点:' + name + ' ' + e.__str__())
 
@@ -172,19 +174,15 @@ class ModelWindow(QWidget):
 
         self.main_window.show_status_info(f'已选中模型[{model_name}]')
 
-
-
-
     def model_save_event(self):
         """保存事件"""
         model_name = self.model_list.currentItem().text()
-        curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        curr_model: Data.Model = \
+        [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
         curr_model.save(self.tree_standard_model.__jsonschema__())
-
 
         # 信息展示
         self.main_window.show_status_info(f'模型[{model_name}]已保存')
-
 
     def model_import_event(self):
         """
@@ -195,7 +193,8 @@ class ModelWindow(QWidget):
             dialog = DiyWidgets.ModelDialog(self)
             if dialog.exec_() == QDialog.Accepted:
                 model_name = self.model_list.currentItem().text()
-                curr_model: Data.Model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+                curr_model: Data.Model = \
+                [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
                 data = dialog.data
                 curr_model.import_json(data)
 
@@ -207,7 +206,6 @@ class ModelWindow(QWidget):
 
     def model_add_node(self):
         pass
-
 
 
 class SubWindow:

@@ -1,2 +1,2 @@
-[2023-08-28 23:20:04,261] INFO: file: DiyWidgets.py line: 196 msg: 数据类型: string -> array
-[2023-08-28 23:20:05,604] INFO: file: DiyWidgets.py line: 196 msg: 数据类型: array -> object
+[2023-08-30 11:41:03,235] INFO: file: Interface.py line: 56 msg: 主界面初始化完成
+[2023-08-30 11:41:09,093] INFO: file: Interface.py line: 152 msg: 进入项目[检查系统]
