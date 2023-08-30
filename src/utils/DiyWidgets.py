@@ -283,6 +283,11 @@ class ModelTreeView(QTreeView):
         右击菜单栏
         """
         index = self.indexAt(pos)
+
+        # 点击空白处无不做反应
+        if self.model().itemFromIndex(index) is None:
+            return
+
         parent: ModelStandardItem = self.model().itemFromIndex(index).parent()
 
         if index.isValid():
@@ -293,8 +298,10 @@ class ModelTreeView(QTreeView):
             delete_action = QAction("删除节点", menu)
 
             # 绑定事件
-            add_child_action.triggered.connect(self.add_child_node)
-            delete_action.triggered.connect(self.delete_node)
+            add_child_action.triggered.connect(self.add_child_node_event)
+            delete_action.triggered.connect(self.delete_node_event)
+            add_prenode_action.triggered.connect(self.add_pre_node_event)
+            add_postnode_action.triggered.connect(self.add_post_node_event)
 
             # 按节点分配菜单按钮
             if parent is None:
@@ -369,7 +376,7 @@ class ModelTreeView(QTreeView):
         result += '名称:[{}]  类型:[{}]'.format(name, info)
 
         self.show_info(result)
-    def delete_node(self):
+    def delete_node_event(self):
         """
         删除结点
         """
@@ -377,7 +384,7 @@ class ModelTreeView(QTreeView):
         if index.isValid():
             self.model().removeRow(index.row(), index.parent())
 
-    def add_child_node(self):
+    def add_child_node_event(self):
         """
         新增子结点
         """
@@ -387,14 +394,14 @@ class ModelTreeView(QTreeView):
             # 执行新增节点的操作
             ModelStandardItem(self, curr_item, '新结点', 'string', True)
 
-    def add_pre_node(self):
+    def add_pre_node_event(self):
         """
         在目标节点前面增加节点
         :return:
         """
         pass
 
-    def add_post_node(self):
+    def add_post_node_event(self):
         """
         在目标节点后面增加节点
         :return:
