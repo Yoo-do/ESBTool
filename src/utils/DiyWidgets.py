@@ -151,7 +151,6 @@ class DataTypeCombox(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        self.last_column_change = []
         self.data_types = Data.ModelDataTypes
 
     def createEditor(self, parent, option, index):
@@ -194,17 +193,7 @@ class DataTypeCombox(QStyledItemDelegate):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
-        change = [parent.child(index.row(), 0).text(), source_data_type, value]
-
-        if source_data_type != value and not self.last_column_change == change:
-
-            # 避免重复执行操作
-            self.last_column_change = change
-
-            # 进行类型转换
-            Log.logger.info(f'{parent.child(index.row(), 0).text()}的类型由 [{source_data_type}] 改为 [{value}] ')
-
-            tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
+        tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 
 

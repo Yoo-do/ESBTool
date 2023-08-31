@@ -1,2 +1,4 @@
-[2023-08-31 00:12:54,249] INFO: file: DiyWidgets.py line: 205 msg: idno的类型由 [string] 改为 [array] 
-[2023-08-31 00:12:54,255] INFO: file: DiyWidgets.py line: 374 msg: idno的类型由 [string] 转换成 [array]
+[2023-08-31 15:46:45,866] INFO: file: Interface.py line: 58 msg: 主界面初始化完成
+[2023-08-31 15:46:48,309] INFO: file: Interface.py line: 154 msg: 进入项目[检查系统]
+[2023-08-31 15:46:51,340] INFO: file: DiyWidgets.py line: 205 msg: gender的类型由 [string] 改为 [array] 
+[2023-08-31 15:46:51,351] INFO: file: DiyWidgets.py line: 374 msg: gender的类型由 [string] 转换成 [array]

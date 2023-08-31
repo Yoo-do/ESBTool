@@ -8,8 +8,8 @@ from PyQt5.Qt import QIcon, QPixmap
 import sys
 import path_lead
 
-from utils import FileIO, Data, DiyWidgets, Log
-from subwindows import SubWindow
+from src.utils import FileIO, Data, DiyWidgets, Log
+from src.subwindows import SubWindow
 
 
 class Interface(QMainWindow):
@@ -28,7 +28,6 @@ class Interface(QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, '错误消息', e.__str__())
-
 
 
         sys.exit(self.app.exec_())

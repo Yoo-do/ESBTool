@@ -1,11 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
     QTreeWidget, QTreeWidgetItem, QDialog
-from PyQt5.Qt import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from enum import Enum
 from src.utils import Data, DiyWidgets, Log
 
-from src.Interface import Interface
 
 
 class SubWindowType(Enum):
@@ -21,7 +18,7 @@ class SubWindowType(Enum):
 
 
 class IndexWindow(QWidget):
-    def __init__(self, main_window: Interface):
+    def __init__(self, main_window):
         super().__init__(main_window)
         self.main_window = main_window
 
@@ -44,7 +41,7 @@ class IndexWindow(QWidget):
 
 
 class ModelWindow(QWidget):
-    def __init__(self, main_window: Interface):
+    def __init__(self, main_window):
         super().__init__(main_window)
         self.main_window = main_window
 
@@ -213,7 +210,7 @@ class SubWindow:
     子窗口管理类
     """
 
-    def __init__(self, main_window: Interface):
+    def __init__(self, main_window):
         self.main_window = main_window
         self.stack_widget = QStackedWidget(main_window)
         main_window.setCentralWidget(self.stack_widget)
