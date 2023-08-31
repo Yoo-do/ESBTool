@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, 
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
     QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QModelIndex
+from PyQt5.QtCore import Qt, QModelIndex, QMetaObject, pyqtSlot
 
 from src.utils import Data, Log
 
@@ -267,6 +267,9 @@ class ModelTreeView(QTreeView):
         # 选中结点信息展示
         self.selectionModel().currentChanged.connect(self.show_node_info)
 
+        # 等model加载完毕再绑定事件
+        QMetaObject.invokeMethod(self, "bind_item_changed", Qt.QueuedConnection)
+
     def show_info(self, info: str):
         """
         展示信息
@@ -493,6 +496,27 @@ class ModelTreeView(QTreeView):
             # 日志输出
             Log.logger.debug(f'新增节点')
 
+    @pyqtSlot()
+    def bind_item_changed(self):
+        """
+        延迟绑定事件
+        """
+        self.model().itemChanged.connect(self.item_changed_event)
+
+    def item_changed_event(self, item: QStandardItem):
+        index = item.index()
+        parent = item.parent()
+        curr_item: ModelStandardItem = parent.child(index.row(), 0)
+
+        if index.column() == 1:
+            # 数据类型变化
+            source_data_type = curr_item.get_data_type()
+            curr_data_type = parent.child(index.row(), 1).text()
+            self.transfer_data_type(index, source_data_type, curr_data_type)
+
+    def data_type_changed(self, item: QStandardItem):
+        pass
+
 
 class ModelStandardItem(QStandardItem):
     """
@@ -515,6 +539,9 @@ class ModelStandardItem(QStandardItem):
         # row 赋值
         row = parent.rowCount() if row is None else row
 
+        # 类型赋值
+        self.data_type = data_type
+
         if data_type in ['object', 'array']:
             self.dir_node_init(parent, data_type, cn_name, description, row)
         else:
@@ -524,9 +551,12 @@ class ModelStandardItem(QStandardItem):
         """
         获取当前行的类型
         """
-        if self.parent() is not None:
-            index = self.index()
-            return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
+        return self.data_type
+    def set_data_type(self, data_type: str):
+        """
+        设置新的数据类型
+        """
+        self.data_type = data_type
 
     def get_column_name(self):
         """
@@ -600,6 +630,7 @@ class ModelStandardItem(QStandardItem):
         parent.setChild(row, 2, is_required_item)
         parent.setChild(row, 3, cn_name_item)
         parent.setChild(row, 4, description_item)
+
 
 
 class ModelStandardModel(QStandardItemModel):

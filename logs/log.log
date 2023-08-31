@@ -1,2 +1,6 @@
-[2023-08-31 22:30:55,924] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-08-31 22:30:59,004] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-08-31 23:01:25,316] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
+[2023-08-31 23:01:27,411] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-08-31 23:01:31,038] INFO: file: DiyWidgets.py line: 363 msg: True
+[2023-08-31 23:01:31,038] INFO: file: DiyWidgets.py line: 364 msg: gender
+[2023-08-31 23:01:31,038] INFO: file: DiyWidgets.py line: 365 msg: <class 'src.utils.DiyWidgets.ModelStandardItem'>
+[2023-08-31 23:01:31,038] INFO: file: DiyWidgets.py line: 369 msg: gender的类型由 [string] 转换成 [array]
