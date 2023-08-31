@@ -180,20 +180,19 @@ class DataTypeCombox(QStyledItemDelegate):
         """
         回写
         """
-        tree_view: ModelTreeView = editor.parent().parent()
-        item = tree_view.model().itemFromIndex(index)
-        parent: ModelStandardItem = item.parent()
-
-        # 原数据类型
-        source_data_type = parent.child(index.row(), 1).text()
+        # tree_view: ModelTreeView = editor.parent().parent()
+        # item = tree_view.model().itemFromIndex(index)
+        # parent: ModelStandardItem = item.parent()
+        #
+        # # 原数据类型
+        # source_data_type = parent.child(index.row(), 1).text()
 
         # 回写模型
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
-        if source_data_type != value:
-            tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
-
+        # if source_data_type != value:
+        #     tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 class ModelDialog(QDialog):
     def __init__(self, parent=None):
@@ -357,10 +356,11 @@ class ModelTreeView(QTreeView):
 
                     # curr_item = parent.child(row, 0)
                     # ModelStandardItem(self, curr_item, 'items', 'object', True)
-                    curr_index = index
-                    curr_item = self.model().itemFromIndex(index).parent().child(curr_index.row(), 0)
+                    curr_item = self.model().itemFromIndex(index).parent().child(index.row(), 0)
+                    Log.logger.info(index.isValid())
                     Log.logger.info(curr_item.text())
                     Log.logger.info(type(curr_item))
+
                     # ModelStandardItem(self, curr_item, 'items', 'object', True)
 
         Log.logger.info(f'{item_name}的类型由 [{source_data_type}] 转换成 [{target_data_type}]')
