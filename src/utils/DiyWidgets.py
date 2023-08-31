@@ -193,7 +193,8 @@ class DataTypeCombox(QStyledItemDelegate):
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
 
-        tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
+        if source_data_type != value:
+            tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 
 
