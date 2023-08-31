@@ -3,8 +3,8 @@ import json
 from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, \
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
     QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QDropEvent
-from PyQt5.QtCore import Qt, QModelIndex, QPoint, QIODevice, QDataStream
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtCore import Qt, QModelIndex
 
 from src.utils import Data, Log
 
@@ -176,7 +176,6 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(value)
         editor.setCurrentIndex(target_index)
 
-
     def setModelData(self, editor, model, index):
         """
         回写
@@ -184,7 +183,6 @@ class DataTypeCombox(QStyledItemDelegate):
         tree_view: ModelTreeView = editor.parent().parent()
         item = tree_view.model().itemFromIndex(index)
         parent: ModelStandardItem = item.parent()
-
 
         # 原数据类型
         source_data_type = parent.child(index.row(), 1).text()
@@ -195,7 +193,6 @@ class DataTypeCombox(QStyledItemDelegate):
 
         if source_data_type != value:
             tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
-
 
 
 class ModelDialog(QDialog):
@@ -336,7 +333,6 @@ class ModelTreeView(QTreeView):
 
             menu.exec_(self.viewport().mapToGlobal(pos))
 
-
     def transfer_data_type(self, index: QModelIndex, source_data_type, target_data_type):
         """
         类型转换
@@ -388,8 +384,8 @@ class ModelTreeView(QTreeView):
 
         drop_position = self.dropIndicatorPosition()
 
-        traget_index = self.indexAt(event.pos())
-        target_parent = self.model().itemFromIndex(traget_index).parent()
+        target_index = self.indexAt(event.pos())
+        target_parent = self.model().itemFromIndex(target_index).parent()
 
         if target_parent is None:
             if drop_position in [QAbstractItemView.AboveItem, QAbstractItemView.BelowItem]:
@@ -400,7 +396,7 @@ class ModelTreeView(QTreeView):
                 super().dropEvent(event)
                 return
 
-        target_data_type = target_parent.child(traget_index.row(), 1).data(role=Qt.DisplayRole)
+        target_data_type = target_parent.child(target_index.row(), 1).data(role=Qt.DisplayRole)
 
         # 放置节点的限制
         if drop_position == QAbstractItemView.OnItem and target_data_type not in ['object']:
@@ -598,8 +594,6 @@ class ModelStandardItem(QStandardItem):
         parent.setChild(row, 2, is_required_item)
         parent.setChild(row, 3, cn_name_item)
         parent.setChild(row, 4, description_item)
-
-
 
 
 class ModelStandardModel(QStandardItemModel):

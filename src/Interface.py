@@ -29,7 +29,6 @@ class Interface(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, '错误消息', e.__str__())
 
-
         sys.exit(self.app.exec_())
 
     def ui_init(self):
@@ -43,7 +42,6 @@ class Interface(QMainWindow):
         self.window_tittle = 'ESBTool 测试版'
         self.setWindowTitle(self.window_tittle)
         self.setWindowIcon(QIcon(QPixmap(path_lead.get_path(r'\icon\ESBTool.png'))))
-
 
         # 菜单栏初始化
         self.menubar_init()
@@ -111,13 +109,11 @@ class Interface(QMainWindow):
 
             self.set_actions_enable(True)
 
-
     def set_actions_enable(self, a0: bool):
         """
         控制按钮是否可用
         """
         self.model_action.setEnabled(a0)
-
 
     def show_status_info(self, info: str):
         """
@@ -185,6 +181,7 @@ class Interface(QMainWindow):
 
         else:
             print('当前页面为' + curr_index.__str__())
+
 
 if __name__ == '__main__':
     interface = Interface()
