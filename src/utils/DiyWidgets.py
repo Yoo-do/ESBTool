@@ -166,6 +166,8 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(self.curr_data_type)
         editor.setCurrentIndex(target_index)
 
+        editor.currentIndexChanged.connect(self.handleIndexChanged)
+
         return editor
 
     def setEditorData(self, editor, index):
@@ -180,19 +182,19 @@ class DataTypeCombox(QStyledItemDelegate):
         """
         回写
         """
-        # tree_view: ModelTreeView = editor.parent().parent()
-        # item = tree_view.model().itemFromIndex(index)
-        # parent: ModelStandardItem = item.parent()
-        #
-        # # 原数据类型
-        # source_data_type = parent.child(index.row(), 1).text()
-
         # 回写模型
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
+        self.closeEditor.emit(editor, QStyledItemDelegate.NoHint)
 
-        # if source_data_type != value:
-        #     tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
+    def handleIndexChanged(self, index):
+        """
+        处理下拉框选项改变的槽函数
+        """
+        pass
+        # editor = self.sender()
+        # self.setModelData(editor, editor.model(), editor.currentIndex().parent())  # 调用setModelData方法回写模型
+
 
 class ModelDialog(QDialog):
     def __init__(self, parent=None):
@@ -360,11 +362,8 @@ class ModelTreeView(QTreeView):
                     # curr_item = parent.child(row, 0)
                     # ModelStandardItem(self, curr_item, 'items', 'object', True)
                     curr_item = self.model().itemFromIndex(index).parent().child(index.row(), 0)
-                    Log.logger.info(index.isValid())
-                    Log.logger.info(curr_item.text())
-                    Log.logger.info(type(curr_item))
 
-                    # ModelStandardItem(self, curr_item, 'items', 'object', True)
+                    ModelStandardItem(self, curr_item, 'items', 'object', True)
 
         Log.logger.info(f'{item_name}的类型由 [{source_data_type}] 转换成 [{target_data_type}]')
 
@@ -512,7 +511,9 @@ class ModelTreeView(QTreeView):
             # 数据类型变化
             source_data_type = curr_item.get_data_type()
             curr_data_type = parent.child(index.row(), 1).text()
-            self.transfer_data_type(index, source_data_type, curr_data_type)
+            # self.transfer_data_type(index, source_data_type, curr_data_type)
+            # self.add_child_node_event()
+            pass
 
     def data_type_changed(self, item: QStandardItem):
         pass
