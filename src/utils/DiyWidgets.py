@@ -298,6 +298,7 @@ class ModelTreeView(QTreeView):
             add_child_action = QAction("新增子节点", menu)
             add_prenode_action = QAction('在前面插入节点', menu)
             add_postnode_action = QAction('在后面插入节点', menu)
+            add_items_action = QAction('增加items', menu)
             delete_action = QAction("删除节点", menu)
 
             # 绑定事件
@@ -305,6 +306,7 @@ class ModelTreeView(QTreeView):
             delete_action.triggered.connect(self.delete_node_event)
             add_prenode_action.triggered.connect(self.add_pre_node_event)
             add_postnode_action.triggered.connect(self.add_post_node_event)
+            add_items_action.triggered.connect(self.add_items_event)
 
             # 按节点分配菜单按钮
             if parent is None:
@@ -326,6 +328,9 @@ class ModelTreeView(QTreeView):
 
             elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) == 'array':
                 # array 类型节点
+
+                if parent.child(index.row(), 0).rowCount() == 0:
+                    menu.addAction(add_items_action)
                 menu.addAction(add_prenode_action)
                 menu.addAction(add_postnode_action)
                 menu.addAction(delete_action)
@@ -515,6 +520,18 @@ class ModelTreeView(QTreeView):
             # 日志输出
             Log.logger.debug(f'新增节点')
 
+    def add_items_event(self):
+        """
+        对于空数组增加items节点
+        :return:
+        """
+        index = self.currentIndex()
+        curr_item = self.model().itemFromIndex(index).parent().child(index.row(), 0)
+        if index.isValid():
+            # 执行新增节点的操作
+            ModelStandardItem(self, curr_item, 'items', 'object', True)
+
+        Log.logger.info(f'[{curr_item.text()}] 新增items节点')
 
 class ModelStandardItem(QStandardItem):
     """
@@ -537,9 +554,6 @@ class ModelStandardItem(QStandardItem):
         # row 赋值
         row = parent.rowCount() if row is None else row
 
-        # 类型赋值
-        self.data_type = data_type
-
         if data_type in ['object', 'array']:
             self.dir_node_init(parent, data_type, cn_name, description, row)
         else:
@@ -549,12 +563,10 @@ class ModelStandardItem(QStandardItem):
         """
         获取当前行的类型
         """
-        return self.data_type
-    def set_data_type(self, data_type: str):
-        """
-        设置新的数据类型
-        """
-        self.data_type = data_type
+        if self.parent() is not None:
+            index = self.index()
+            return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
+
 
     def get_column_name(self):
         """
@@ -584,12 +596,13 @@ class ModelStandardItem(QStandardItem):
         # 插入到指定行
         parent.insertRow(row, self)
 
-        # object、array类型不允许修改类型
         if isinstance(parent, self.__class__):
             parent.setChild(row, 1, data_type_item)
-            # array下的object不允许修改类型
+            # array下的items不允许修改名称类型
             if parent.get_data_type() == 'array':
+                parent.child(row, 0).setEditable(False)
                 parent.child(row, 1).setEditable(False)
+
             # 限制编辑
             parent.setChild(row, 2, QStandardItem())
             parent.child(row, 2).setEditable(False)
