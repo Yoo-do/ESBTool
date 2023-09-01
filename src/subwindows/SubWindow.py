@@ -218,7 +218,12 @@ class ModelWindow(QWidget):
         dialog = DiyWidgets.ModelVerifyDialog(curr_model)
         dialog.exec_()
 
-
+class ApiWindow(QWidget):
+    """
+    接口层窗口
+    """
+    def __init__(self, main_window):
+        pass
 
 class SubWindow:
     """

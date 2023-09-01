@@ -4,20 +4,19 @@ from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, 
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
     QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QModelIndex, QMetaObject, pyqtSlot
+from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal
 
 from src.utils import Data, Log
 
 
-class ListDialog(QDialog):
+class ProjListDialog(QDialog):
     def __init__(self, parent, tittle, items):
         """
-        弹窗列表
+        项目弹窗列表
         """
 
         super().__init__(parent)
 
-        self.show()
         self.setWindowTitle(tittle)
 
         layout = QBoxLayout(QBoxLayout.TopToBottom)
@@ -28,6 +27,7 @@ class ListDialog(QDialog):
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
+        self.list_widget.doubleClicked.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
@@ -71,9 +71,12 @@ class ModelLisTWidget(QListWidget):
         if item is not None:
             rename_action = QAction("重命名")
             rename_action.triggered.connect(self.model_item_rename_event)
+            duplicate_action = QAction("复制")
+            duplicate_action.triggered.connect(self.model_item_duplicate_event)
             delete_action = QAction("删除模型")
             delete_action.triggered.connect(self.model_item_delete_event)
             menu.addAction(rename_action)
+            menu.addAction(delete_action)
             menu.addAction(delete_action)
 
         else:
@@ -141,6 +144,10 @@ class ModelLisTWidget(QListWidget):
         self.curr_proj.add_model(target_name)
 
         self.parent_fresh_data()
+
+
+    def model_item_duplicate_event(self):
+        pass
 
 
 class DataTypeCombox(QStyledItemDelegate):
@@ -326,9 +333,6 @@ class ModelTreeView(QTreeView):
         super().setModel(model)
         # 选中结点信息展示
         self.selectionModel().currentChanged.connect(self.show_node_info)
-
-        # 等model加载完毕再绑定事件
-        # QMetaObject.invokeMethod(self, "bind_item_changed", Qt.QueuedConnection)
 
     def show_info(self, info: str):
         """

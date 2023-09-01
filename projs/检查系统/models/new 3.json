@@ -1,1 +1,0 @@
-{"type": "object", "properties": {"id": {"type": "array", "items": {"type": "object", "properties": {"新结点": {"type": "string", "tittle": "", "description": "", "require": true}}, "required": ["新结点"], "require": true}, "require": true}}, "required": ["id"]}
