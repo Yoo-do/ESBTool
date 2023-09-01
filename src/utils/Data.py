@@ -24,7 +24,7 @@ class Model:
             jsonschema.validate(data, self.model)
             return True
         except jsonschema.ValidationError as e:
-            raise Exception(e.path).__str__() + ' : ' + e.message.__str__()
+            raise Exception((e.path).__str__() + ' : ' + e.message.__str__())
 
     @staticmethod
     def generate_jsonschema(json_data):

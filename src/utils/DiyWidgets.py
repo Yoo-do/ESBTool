@@ -197,7 +197,10 @@ class DataTypeCombox(QStyledItemDelegate):
             tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 
-class ModelDialog(QDialog):
+class ModelImportDialog(QDialog):
+    """
+    导入模型窗体
+    """
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle("导入模型")
@@ -237,6 +240,60 @@ class ModelDialog(QDialog):
         json_text = self.text_edit.toPlainText()
         try:
             self.data = json.loads(json_text)
+            super().accept()
+        except json.JSONDecodeError:
+            QMessageBox.critical(self, "错误", "无效的JSON文本")
+        except Exception as e:
+            QMessageBox.critical(self, "错误", e.__str__())
+
+    def reject(self):
+        super().reject()
+
+
+class ModelVerifyDialog(QDialog):
+    def __init__(self, model: Data.Model, parent=None):
+        super().__init__(parent=parent)
+
+        self.model = model
+
+        self.setWindowTitle("校验json")
+
+        self.text_edit = QTextEdit()
+        self.text_edit.setPlaceholderText("请输入JSON文本")
+
+        # 创建按钮
+        self.format_button = QPushButton("格式化JSON")
+        self.format_button.clicked.connect(self.format_json_event)
+        self.verify_button = QPushButton("校验")
+        self.verify_button.clicked.connect(self.accept)
+        self.cancel_button = QPushButton("取消")
+        self.cancel_button.clicked.connect(self.reject)
+
+        # 窗体布局
+        layout = QBoxLayout(QBoxLayout.TopToBottom, self)
+        layout.addWidget(self.text_edit)
+        layout.addWidget(self.format_button)
+        layout.addWidget(self.verify_button)
+        layout.addWidget(self.cancel_button)
+
+    def format_json_event(self):
+        """
+        格式化json事件
+        :return:
+        """
+        json_text = self.text_edit.toPlainText()
+        try:
+            parsed = json.loads(json_text)
+            formatted_json = json.dumps(parsed, indent=4, ensure_ascii=False)
+            self.text_edit.setPlainText(formatted_json)
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "错误", "无效的JSON文本")
+
+    def accept(self):
+        json_text = self.text_edit.toPlainText()
+        try:
+            self.model.validate(json.loads(json_text))
+            QMessageBox.information(self, "消息", "校验符合当前模型")
             super().accept()
         except json.JSONDecodeError:
             QMessageBox.critical(self, "错误", "无效的JSON文本")

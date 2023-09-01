@@ -1,6 +1,2 @@
-[2023-09-01 09:24:04,844] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-09-01 09:24:07,769] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
-[2023-09-01 09:24:27,956] INFO: file: DiyWidgets.py line: 393 msg: idtypecode的类型由 [string] 转换成 [array]
-[2023-09-01 09:24:30,591] INFO: file: DiyWidgets.py line: 534 msg: [idtypecode] 新增items节点
-[2023-09-01 09:24:44,379] INFO: file: DiyWidgets.py line: 393 msg: idno的类型由 [string] 转换成 [array]
-[2023-09-01 09:24:52,747] INFO: file: DiyWidgets.py line: 534 msg: [idno] 新增items节点
+[2023-09-01 10:18:40,807] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
+[2023-09-01 10:18:45,346] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]

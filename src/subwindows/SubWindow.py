@@ -84,6 +84,11 @@ class ModelWindow(QWidget):
         self.model_import_button.clicked.connect(self.model_import_event)
         model_detail_button_layout.addWidget(self.model_import_button)
 
+        self.model_verify_button = QPushButton('校验json', self)
+        self.model_verify_button.setEnabled(False)
+        self.model_verify_button.clicked.connect(self.model_verify_event)
+        model_detail_button_layout.addWidget(self.model_verify_button)
+
         self.model_save_button = QPushButton('保存', self)
         self.model_import_button.setEnabled(False)
         self.model_save_button.clicked.connect(self.model_save_event)
@@ -104,6 +109,7 @@ class ModelWindow(QWidget):
         """
         # 按钮状态调整
         self.model_import_button.setEnabled(False)
+        self.model_verify_button.setEnabled(False)
         self.model_save_button.setEnabled(False)
 
         self.model_list.clear()
@@ -167,6 +173,7 @@ class ModelWindow(QWidget):
 
         # 更新按钮状态
         self.model_import_button.setEnabled(True)
+        self.model_verify_button.setEnabled(True)
         self.model_save_button.setEnabled(True)
 
         self.main_window.show_status_info(f'已选中模型[{model_name}]')
@@ -187,7 +194,7 @@ class ModelWindow(QWidget):
         :return:
         """
         try:
-            dialog = DiyWidgets.ModelDialog(self)
+            dialog = DiyWidgets.ModelImportDialog(self)
             if dialog.exec_() == QDialog.Accepted:
                 model_name = self.model_list.currentItem().text()
                 curr_model: Data.Model = \
@@ -201,8 +208,15 @@ class ModelWindow(QWidget):
         except Exception as e:
             print(e.__str__())
 
-    def model_add_node(self):
-        pass
+
+    def model_verify_event(self):
+        model_name = self.model_list.currentItem().text()
+        curr_model: Data.Model = \
+            [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+
+        dialog = DiyWidgets.ModelVerifyDialog(curr_model)
+        dialog.exec_()
+
 
 
 class SubWindow:
