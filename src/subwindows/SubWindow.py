@@ -14,7 +14,7 @@ class SubWindowType(Enum):
     # 模型页面
     MODEL_WINDOW = 1,
     # 校验页面
-    VALIDATE_WINDOW = 2,
+    API_WINDOW = 2,
 
 
 class IndexWindow(QWidget):
@@ -223,6 +223,22 @@ class ApiWindow(QWidget):
     接口层窗口
     """
     def __init__(self, main_window):
+        super().__init__(main_window)
+        self.main_window = main_window
+
+        self.ui_init()
+        self.fresh_data()
+
+    def ui_init(self):
+        """
+        ui初始化
+        """
+        pass
+
+    def fresh_data(self):
+        """
+        刷新数据
+        """
         pass
 
 class SubWindow:
@@ -239,6 +255,8 @@ class SubWindow:
         self.stack_widget.addWidget(IndexWindow(main_window))
 
         self.stack_widget.addWidget(ModelWindow(main_window))
+
+        self.stack_widget.addWidget(ApiWindow(main_window))
 
     def switch_to_window(self, target_window_type: SubWindowType):
         self.stack_widget.setCurrentIndex(target_window_type.value[0])

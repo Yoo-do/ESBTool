@@ -167,6 +167,9 @@ class Interface(QMainWindow):
     def show_model_window(self):
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.MODEL_WINDOW)
 
+    def show_api_window(self):
+        self.sub_window_object.switch_to_window(SubWindow.SubWindowType.API_WINDOW)
+
     def test_event(self):
         """
         测试事件
