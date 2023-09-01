@@ -166,8 +166,6 @@ class DataTypeCombox(QStyledItemDelegate):
         target_index = self.data_types.index(self.curr_data_type)
         editor.setCurrentIndex(target_index)
 
-        editor.currentIndexChanged.connect(self.handleIndexChanged)
-
         return editor
 
     def setEditorData(self, editor, index):
@@ -182,18 +180,21 @@ class DataTypeCombox(QStyledItemDelegate):
         """
         回写
         """
+
+        tree_view: ModelTreeView = editor.parent().parent()
+        item = tree_view.model().itemFromIndex(index)
+        parent: ModelStandardItem = item.parent()
+
+        # 原数据类型
+        source_data_type = parent.child(index.row(), 1).text()
+
         # 回写模型
         value = editor.currentText()
         model.setData(index, value, role=Qt.EditRole)
-        self.closeEditor.emit(editor, QStyledItemDelegate.NoHint)
 
-    def handleIndexChanged(self, index):
-        """
-        处理下拉框选项改变的槽函数
-        """
-        pass
-        # editor = self.sender()
-        # self.setModelData(editor, editor.model(), editor.currentIndex().parent())  # 调用setModelData方法回写模型
+        if source_data_type != value:
+            # 进行类型转换
+            tree_view.transfer_data_type(index, source_data_type, target_data_type=value)
 
 
 class ModelDialog(QDialog):
@@ -270,7 +271,7 @@ class ModelTreeView(QTreeView):
         self.selectionModel().currentChanged.connect(self.show_node_info)
 
         # 等model加载完毕再绑定事件
-        QMetaObject.invokeMethod(self, "bind_item_changed", Qt.QueuedConnection)
+        # QMetaObject.invokeMethod(self, "bind_item_changed", Qt.QueuedConnection)
 
     def show_info(self, info: str):
         """
@@ -357,13 +358,32 @@ class ModelTreeView(QTreeView):
                 parent.child(row, 2).setEditable(False)
 
                 if target_data_type == 'array':
-                    # 如果是array类型则需要额外增加一个item子节点
-
+                    # 如果是array类型则需要额外增加一个item子节点 报错暂未实现
+                    # 谜之闪退
                     # curr_item = parent.child(row, 0)
                     # ModelStandardItem(self, curr_item, 'items', 'object', True)
-                    curr_item = self.model().itemFromIndex(index).parent().child(index.row(), 0)
+                    pass
 
-                    ModelStandardItem(self, curr_item, 'items', 'object', True)
+        elif source_data_type in ['object', 'array']:
+
+            # 清除子节点
+            curr_item = parent.child(row, 0)
+            curr_item.removeRows(0, curr_item.rowCount())
+
+            if target_data_type == 'object':
+                # 暂不需要额外操作
+                pass
+            elif target_data_type == 'array':
+                pass
+            else:
+
+                # 普通类型默认加上必填
+                parent.setChild(row, 2, QStandardItem())
+                parent.child(row, 2).setEditable(True)
+                parent.child(row, 2).setCheckState(Qt.Checked)
+
+
+
 
         Log.logger.info(f'{item_name}的类型由 [{source_data_type}] 转换成 [{target_data_type}]')
 
@@ -495,29 +515,6 @@ class ModelTreeView(QTreeView):
             # 日志输出
             Log.logger.debug(f'新增节点')
 
-    @pyqtSlot()
-    def bind_item_changed(self):
-        """
-        延迟绑定事件
-        """
-        self.model().itemChanged.connect(self.item_changed_event)
-
-    def item_changed_event(self, item: QStandardItem):
-        index = item.index()
-        parent = item.parent()
-        curr_item: ModelStandardItem = parent.child(index.row(), 0)
-
-        if index.column() == 1:
-            # 数据类型变化
-            source_data_type = curr_item.get_data_type()
-            curr_data_type = parent.child(index.row(), 1).text()
-            # self.transfer_data_type(index, source_data_type, curr_data_type)
-            # self.add_child_node_event()
-            pass
-
-    def data_type_changed(self, item: QStandardItem):
-        pass
-
 
 class ModelStandardItem(QStandardItem):
     """
@@ -590,15 +587,16 @@ class ModelStandardItem(QStandardItem):
         # object、array类型不允许修改类型
         if isinstance(parent, self.__class__):
             parent.setChild(row, 1, data_type_item)
-            # 不允许修改类型
-            parent.child(row, 1).setEditable(False)
+            # array下的object不允许修改类型
+            if parent.get_data_type() == 'array':
+                parent.child(row, 1).setEditable(False)
             # 限制编辑
             parent.setChild(row, 2, QStandardItem())
             parent.child(row, 2).setEditable(False)
 
             parent.setChild(row, 3, cn_name_item)
             parent.setChild(row, 4, description_item)
-        elif isinstance(parent, ModelStandardItem | QStandardItemModel):
+        elif isinstance(parent, QStandardItemModel):
             parent.setItem(row, 1, data_type_item)
             # 不允许修改类型
             parent.item(row, 1).setEditable(False)
