@@ -146,11 +146,12 @@ class ModelWindow(QWidget):
 
             # 判断是否有子节点需要生成
             if data['type'] == 'object':
-                for key, value in data['properties'].items():
-                    self.generate_tree_model(root, value, key)
+                if data.get('properties') is not None:
+                    for key, value in data['properties'].items():
+                        self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                # 数组类型默认增加一个items
-                self.generate_tree_model(root, data['items'])
+                if data.get('items') is not None:
+                    self.generate_tree_model(root, data.get('items'))
             else:
                 pass
 

@@ -420,10 +420,6 @@ class ModelTreeView(QTreeView):
                 parent.child(row, 2).setEditable(False)
 
                 if target_data_type == 'array':
-                    # 如果是array类型则需要额外增加一个item子节点 报错暂未实现
-                    # 谜之闪退
-                    # curr_item = parent.child(row, 0)
-                    # ModelStandardItem(self, curr_item, 'items', 'object', True)
                     pass
 
         elif source_data_type in ['object', 'array']:
@@ -716,6 +712,7 @@ class ModelStandardModel(QStandardItemModel):
         if self.rowCount() == 1:
             root = self.item(0)
             data_type = self.item(0, 1).text()
+            data_type = self.item(0, 1).text()
 
             properties, required = self.generate_json(root, True)
             result = {"type": data_type, "properties": properties, "required": required}
@@ -758,12 +755,12 @@ class ModelStandardModel(QStandardItemModel):
                             required.append(col_name)
                             # 数组类型的往下再取一个节点
                             res = {"type": data_type}
-                            res.update({"items": next(iter(self.generate_json(child).values()))})
+                            res.update({"items": next(iter(self.generate_json(child).values())), "require": True})
                             result.update({col_name: res})
                         elif data_type == 'object':
                             child_properties, child_required = self.generate_json(child, True)
                             result.update({col_name: {"type": data_type, "properties": child_properties,
-                                                      "required": child_required}})
+                                                      "required": child_required, "require": True}})
 
             if is_object:
                 return result, required
