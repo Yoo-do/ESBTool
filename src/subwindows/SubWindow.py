@@ -14,7 +14,7 @@ class SubWindowType(Enum):
     # 模型页面
     MODEL_WINDOW = 1,
     # 校验页面
-    VALIDATE_WINDOW = 2,
+    API_WINDOW = 2,
 
 
 class IndexWindow(QWidget):
@@ -146,11 +146,12 @@ class ModelWindow(QWidget):
 
             # 判断是否有子节点需要生成
             if data['type'] == 'object':
-                for key, value in data['properties'].items():
-                    self.generate_tree_model(root, value, key)
+                if data.get('properties') is not None:
+                    for key, value in data['properties'].items():
+                        self.generate_tree_model(root, value, key)
             elif data['type'] == 'array':
-                # 数组类型默认增加一个items
-                self.generate_tree_model(root, data['items'])
+                if data.get('items') is not None:
+                    self.generate_tree_model(root, data.get('items'))
             else:
                 pass
 
@@ -217,7 +218,28 @@ class ModelWindow(QWidget):
         dialog = DiyWidgets.ModelVerifyDialog(curr_model)
         dialog.exec_()
 
+class ApiWindow(QWidget):
+    """
+    接口层窗口
+    """
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.main_window = main_window
 
+        self.ui_init()
+        self.fresh_data()
+
+    def ui_init(self):
+        """
+        ui初始化
+        """
+        pass
+
+    def fresh_data(self):
+        """
+        刷新数据
+        """
+        pass
 
 class SubWindow:
     """
@@ -233,6 +255,8 @@ class SubWindow:
         self.stack_widget.addWidget(IndexWindow(main_window))
 
         self.stack_widget.addWidget(ModelWindow(main_window))
+
+        self.stack_widget.addWidget(ApiWindow(main_window))
 
     def switch_to_window(self, target_window_type: SubWindowType):
         self.stack_widget.setCurrentIndex(target_window_type.value[0])

@@ -4,20 +4,19 @@ from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, 
     QTreeWidget, QTreeWidgetItem, QStyledItemDelegate, QComboBox, QTreeView, QMessageBox, QInputDialog, QTextEdit, \
     QPushButton, QAction, QMenu, QAbstractItemView, QMainWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QModelIndex, QMetaObject, pyqtSlot
+from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal
 
 from src.utils import Data, Log
 
 
-class ListDialog(QDialog):
+class ProjListDialog(QDialog):
     def __init__(self, parent, tittle, items):
         """
-        弹窗列表
+        项目弹窗列表
         """
 
         super().__init__(parent)
 
-        self.show()
         self.setWindowTitle(tittle)
 
         layout = QBoxLayout(QBoxLayout.TopToBottom)
@@ -28,6 +27,7 @@ class ListDialog(QDialog):
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
+        self.list_widget.doubleClicked.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
@@ -71,9 +71,12 @@ class ModelListWidget(QListWidget):
         if item is not None:
             rename_action = QAction("重命名")
             rename_action.triggered.connect(self.model_item_rename_event)
+            duplicate_action = QAction("复制")
+            duplicate_action.triggered.connect(self.model_item_duplicate_event)
             delete_action = QAction("删除模型")
             delete_action.triggered.connect(self.model_item_delete_event)
             menu.addAction(rename_action)
+            menu.addAction(delete_action)
             menu.addAction(delete_action)
 
         else:
@@ -141,6 +144,10 @@ class ModelListWidget(QListWidget):
         self.curr_proj.add_model(target_name)
 
         self.parent_fresh_data()
+
+
+    def model_item_duplicate_event(self):
+        pass
 
 
 class DataTypeCombox(QStyledItemDelegate):
@@ -328,9 +335,6 @@ class ModelTreeView(QTreeView):
         # 选中结点信息展示
         self.selectionModel().currentChanged.connect(self.show_node_info)
 
-        # 等model加载完毕再绑定事件
-        # QMetaObject.invokeMethod(self, "bind_item_changed", Qt.QueuedConnection)
-
     def show_info(self, info: str):
         """
         展示信息
@@ -421,10 +425,6 @@ class ModelTreeView(QTreeView):
                 parent.child(row, 2).setEditable(False)
 
                 if target_data_type == 'array':
-                    # 如果是array类型则需要额外增加一个item子节点 报错暂未实现
-                    # 谜之闪退
-                    # curr_item = parent.child(row, 0)
-                    # ModelStandardItem(self, curr_item, 'items', 'object', True)
                     pass
 
         elif source_data_type in ['object', 'array']:
@@ -713,6 +713,7 @@ class ModelStandardModel(QStandardItemModel):
         if self.rowCount() == 1:
             root = self.item(0)
             data_type = self.item(0, 1).text()
+            data_type = self.item(0, 1).text()
 
             properties, required = self.generate_json(root, True)
             result = {"type": data_type, "properties": properties, "required": required}
@@ -755,12 +756,12 @@ class ModelStandardModel(QStandardItemModel):
                             required.append(col_name)
                             # 数组类型的往下再取一个节点
                             res = {"type": data_type}
-                            res.update({"items": next(iter(self.generate_json(child).values()))})
+                            res.update({"items": next(iter(self.generate_json(child).values())), "require": True})
                             result.update({col_name: res})
                         elif data_type == 'object':
                             child_properties, child_required = self.generate_json(child, True)
                             result.update({col_name: {"type": data_type, "properties": child_properties,
-                                                      "required": child_required}})
+                                                      "required": child_required, "require": True}})
 
             if is_object:
                 return result, required

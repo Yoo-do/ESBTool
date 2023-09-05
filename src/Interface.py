@@ -134,7 +134,7 @@ class Interface(QMainWindow):
 
     def open_proj_event(self):
         proj_names = FileIO.ProjIO.get_proj_names()
-        dialog = DiyWidgets.ListDialog(self, '选择项目', proj_names)
+        dialog = DiyWidgets.ProjListDialog(self, '选择项目', proj_names)
         if dialog.exec_() == QDialog.Accepted:
             selected_proj = [item.text() for item in dialog.list_widget.selectedItems()][0]
             self.set_current_proj(selected_proj)
@@ -166,6 +166,9 @@ class Interface(QMainWindow):
 
     def show_model_window(self):
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.MODEL_WINDOW)
+
+    def show_api_window(self):
+        self.sub_window_object.switch_to_window(SubWindow.SubWindowType.API_WINDOW)
 
     def test_event(self):
         """
