@@ -34,7 +34,7 @@ class ListDialog(QDialog):
         self.setLayout(layout)
 
 
-class ModelLisTWidget(QListWidget):
+class ModelListWidget(QListWidget):
     """
     模型列表窗体类
     """
@@ -201,6 +201,7 @@ class ModelImportDialog(QDialog):
     """
     导入模型窗体
     """
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle("导入模型")
@@ -444,9 +445,6 @@ class ModelTreeView(QTreeView):
                 parent.child(row, 2).setEditable(True)
                 parent.child(row, 2).setCheckState(Qt.Checked)
 
-
-
-
         Log.logger.info(f'{item_name}的类型由 [{source_data_type}] 转换成 [{target_data_type}]')
 
     def startDrag(self, supported_action):
@@ -590,6 +588,7 @@ class ModelTreeView(QTreeView):
 
         Log.logger.info(f'[{curr_item.text()}] 新增items节点')
 
+
 class ModelStandardItem(QStandardItem):
     """
     模型节点类
@@ -623,7 +622,6 @@ class ModelStandardItem(QStandardItem):
         if self.parent() is not None:
             index = self.index()
             return self.parent().child(index.row(), 1).data(role=Qt.DisplayRole)
-
 
     def get_column_name(self):
         """
@@ -699,7 +697,6 @@ class ModelStandardItem(QStandardItem):
         parent.setChild(row, 2, is_required_item)
         parent.setChild(row, 3, cn_name_item)
         parent.setChild(row, 4, description_item)
-
 
 
 class ModelStandardModel(QStandardItemModel):

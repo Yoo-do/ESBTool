@@ -58,7 +58,7 @@ class ModelWindow(QWidget):
         main_layout.addLayout(model_list_layout)
         main_layout.setStretchFactor(model_list_layout, 1)
 
-        self.model_list = DiyWidgets.ModelLisTWidget(self)
+        self.model_list = DiyWidgets.ModelListWidget(self)
         self.model_list.itemClicked.connect(self.model_selected_event)
         model_list_layout.addWidget(self.model_list)
 

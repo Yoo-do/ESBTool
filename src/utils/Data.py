@@ -110,6 +110,7 @@ class Proj:
     def __init__(self, proj_name):
         self.proj_name = proj_name
         self.models = []
+        self.model_config = {}
         self.apis = []
 
         self.fresh_models()
@@ -123,6 +124,14 @@ class Proj:
         models = FileIO.ProjIO.get_models(self.proj_name)
         for model in models:
             self.models.append(Model(self.proj_name, model['model_name'], model['model']))
+
+    def fresh_model_config(self):
+        """
+        获取模型配置
+        :return:
+        """
+        self.model_config = FileIO.ProjIO.get_model_config(self.proj_name)
+
 
     def delete_model(self, model_name):
         """

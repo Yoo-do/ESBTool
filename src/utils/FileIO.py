@@ -72,6 +72,14 @@ class ProjIO:
         return models
 
     @staticmethod
+    def get_model_config(proj_name):
+        proj_path = ProjIO.get_proj_path(proj_name)
+        model_config_path = os.path.join(proj_path, 'modelConfig.json')
+
+        with open(model_config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    @staticmethod
     def add_model(proj_name, model_name):
         """
         新增model
