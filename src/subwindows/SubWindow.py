@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
     QTreeWidget, QTreeWidgetItem, QDialog
 from enum import Enum
-from src.utils import Data, DiyWidgets, Log
+from src.utils import Data, DiyWidgets, Log, ModelListWidgets
 
 
 
@@ -54,20 +54,23 @@ class ModelWindow(QWidget):
         main_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
 
         # 模型列表
-        model_list_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        main_layout.addLayout(model_list_layout)
-        main_layout.setStretchFactor(model_list_layout, 1)
+        # model_list_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        # main_layout.addLayout(model_list_layout)
+        # main_layout.setStretchFactor(model_list_layout, 1)
+        #
+        # self.model_list = DiyWidgets.ModelListWidget(self)
+        # self.model_list.itemClicked.connect(self.model_selected_event)
+        # model_list_layout.addWidget(self.model_list)
+        #
+        # model_list_button_layout = QBoxLayout(QBoxLayout.LeftToRight)
+        # model_list_layout.addLayout(model_list_button_layout)
+        #
+        # self.model_add_button = QPushButton('新增模型', self)
+        # self.model_add_button.clicked.connect(self.model_list.model_item_add_event)
+        # model_list_button_layout.addWidget(self.model_add_button)
 
-        self.model_list = DiyWidgets.ModelListWidget(self)
-        self.model_list.itemClicked.connect(self.model_selected_event)
-        model_list_layout.addWidget(self.model_list)
-
-        model_list_button_layout = QBoxLayout(QBoxLayout.LeftToRight)
-        model_list_layout.addLayout(model_list_button_layout)
-
-        self.model_add_button = QPushButton('新增模型', self)
-        self.model_add_button.clicked.connect(self.model_list.model_item_add_event)
-        model_list_button_layout.addWidget(self.model_add_button)
+        self.model_list_tree = ModelListWidgets.ModelListTreeView(self)
+        main_layout.addWidget(self.model_list_tree)
 
         # 模型细节
 
@@ -112,13 +115,17 @@ class ModelWindow(QWidget):
         self.model_verify_button.setEnabled(False)
         self.model_save_button.setEnabled(False)
 
-        self.model_list.clear()
+
+
+        # self.model_list.clear()
         if self.tree_standard_model is not None:
             self.tree_standard_model.clear()
 
         if self.main_window.curr_proj is not None:
-            models = [model.model_name for model in self.main_window.curr_proj.models]
-            self.model_list.addItems(models)
+            self.model_list_tree.fresh_data(self.main_window.curr_proj)
+
+            # models = [model.model_name for model in self.main_window.curr_proj.models]
+            # self.model_list.addItems(models)
 
         # 提示框删除
         self.main_window.clear_status_info()

@@ -1,1 +1,1 @@
-{"name": "申请单", "is_dir": true, "items": [{"name": "患者基本信息", "is_dir": false, "path": "患者基本信息"},{"name": "检查申请单信息", "is_dir": false, "path": "检查申请单信息"},{"name": "病理申请单信息", "is_dir": false, "path": "病理申请单信息"}]}
+[{"name": "申请单", "is_dir": true, "items": [{"name": "患者基本信息", "is_dir": false, "path": "患者基本信息"},{"name": "检查申请单信息", "is_dir": false, "path": "检查申请单信息"},{"name": "病理申请单信息", "is_dir": false, "path": "病理申请单信息"}]}]

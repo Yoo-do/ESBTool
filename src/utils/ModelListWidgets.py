@@ -3,10 +3,10 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from src.utils import FileIO
 
 class ModelListStandardItem(QStandardItem):
-    def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, real_path: str):
+    def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str=None):
         super().__init__(name)
         self.is_dir = is_dir
-        self.real_path = real_path
+        self.path = path
         parent.appendRow(self)
 
 
@@ -27,6 +27,14 @@ class ModelListTreeView(QTreeView):
 
         model = ModelListStandardModel()
 
+        self.generate_model(model, model_config)
 
-    def generate_model(self):
-        pass
+        self.setModel(model)
+
+
+    def generate_model(self, parent, data: list):
+        for item in data:
+            root = ModelListStandardItem(parent, item.get('name'), item.get('is_dir'), item.get('path'))
+            if item.get('is_dir'):
+                self.generate_model(root, item.get('items'))
+
