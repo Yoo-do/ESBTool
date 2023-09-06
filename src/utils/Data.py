@@ -83,7 +83,7 @@ class Model:
 
     def rename(self, target_name):
         """
-        修改model的名字
+        修改model的名字, 传入的为逻辑名称
         """
         FileIO.ProjIO.rename_model(self.proj_name, self.model_name, target_name)
         self.model_name = target_name

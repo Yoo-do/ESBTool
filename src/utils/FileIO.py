@@ -128,7 +128,7 @@ class ProjIO:
             os.rename(source_model_file_path, target_model_file_path)
 
     @staticmethod
-    def rewrite_model(proj_name, model_name, data: dict):
+    def rewrite_model(proj_name, model_path, data: dict):
         """
         修改model的内容
         """
@@ -137,7 +137,7 @@ class ProjIO:
         if not os.path.exists(model_path):
             os.mkdir('models')
 
-        model_file_path = os.path.join(model_path, model_name + '.json')
+        model_file_path = os.path.join(model_path, model_path + '.json')
 
         if os.path.exists(model_file_path):
             os.remove(model_file_path)
