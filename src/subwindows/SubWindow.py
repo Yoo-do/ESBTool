@@ -70,6 +70,7 @@ class ModelWindow(QWidget):
         # model_list_button_layout.addWidget(self.model_add_button)
 
         self.model_list_tree = ModelListWidgets.ModelListTreeView(self)
+        self.model_list_tree.clicked.connect(self.model_selected_event)
         main_layout.addWidget(self.model_list_tree)
 
         # 模型细节
@@ -173,8 +174,15 @@ class ModelWindow(QWidget):
         :return:
         """
 
-        model_name = self.model_list.currentItem().text()
-        data = [model.model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        # model_name = self.model_list.currentItem().text()
+        index = self.model_list_tree.currentIndex()
+        item = self.model_list_tree.model().itemFromIndex(index)
+        if item.is_dir:
+            return
+
+        model_name = item.text()
+        self.curr_model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        data = self.curr_model.model
 
         self.fresh_model_detail(data)
         self.model_detial_tree.expandAll()
@@ -188,13 +196,10 @@ class ModelWindow(QWidget):
 
     def model_save_event(self):
         """保存事件"""
-        model_name = self.model_list.currentItem().text()
-        curr_model: Data.Model = \
-        [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
-        curr_model.save(self.tree_standard_model.__jsonschema__())
+        self.curr_model.save(self.tree_standard_model.__jsonschema__())
 
         # 信息展示
-        self.main_window.show_status_info(f'模型[{model_name}]已保存')
+        self.main_window.show_status_info(f'模型[{self.curr_model.model_name}]已保存')
 
     def model_import_event(self):
         """

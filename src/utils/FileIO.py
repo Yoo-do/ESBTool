@@ -80,7 +80,7 @@ class ProjIO:
             return json.load(f)
 
     @staticmethod
-    def add_model(proj_name, model_name):
+    def add_model(proj_name, model_path):
         """
         新增model
         """
@@ -89,7 +89,7 @@ class ProjIO:
         if not os.path.exists(model_path):
             os.mkdir('models')
 
-        model_file_path = os.path.join(model_path, model_name + '.json')
+        model_file_path = os.path.join(model_path, model_path + '.json')
 
         if not os.path.exists(model_file_path):
             data = {"type": "object", "properties": {}, "required": []}
@@ -97,7 +97,7 @@ class ProjIO:
                 json.dump(data, f, ensure_ascii=False)
 
     @staticmethod
-    def delete_model(proj_name, model_name):
+    def delete_model(proj_name, model_path):
         """
         删除model
         """
@@ -106,7 +106,7 @@ class ProjIO:
         if not os.path.exists(model_path):
             os.mkdir('models')
 
-        model_file_path = os.path.join(model_path, model_name + '.json')
+        model_file_path = os.path.join(model_path, model_path + '.json')
 
         if os.path.exists(model_file_path):
             os.remove(model_file_path)
@@ -152,5 +152,4 @@ if __name__ == '__main__':
     # ProjIO.add_model('检查系统', 'test2')
     # ProjIO.delete_model('检查系统', 'test2')
     # ProjIO.rename_model('检查系统', 'test2', 'test')
-    ProjIO.rewrite_model('检查系统', 'test', {"type": "object", "properties": {
-        "id": {"type": "string", "tittle": "消息id", "description": "", "require": True}}, "required": []})
+    #
