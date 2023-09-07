@@ -10,6 +10,21 @@ class ModelListStandardItem(QStandardItem):
         self.path = path
         parent.appendRow(self)
 
+    def get_full_name(self):
+        """
+        获取模型的绝对逻辑路径
+        :return:
+        """
+        path = []
+        parent = self.parent()
+        while parent is not None:
+            path.insert(parent.name)
+            parent = parent.parent()
+
+        path.append(self.text())
+        return path
+
+
 
 class ModelListStandardModel(QStandardItemModel):
     def __init__(self):

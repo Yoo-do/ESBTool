@@ -14,9 +14,10 @@ class Model:
     数据模型类
     """
 
-    def __init__(self, proj_name: str, model_name: str, model: dict):
+    def __init__(self, proj_name: str, model_name: str, model_path: str, model: dict):
         self.proj_name = proj_name
         self.model_name = model_name
+        self.model_path = model_path
         self.model = model
 
     def validate(self, data: dict) -> bool:
@@ -79,29 +80,29 @@ class Model:
         """
 
         self.model = data
-        FileIO.ProjIO.rewrite_model(self.proj_name, self.model_name, self.model)
+        FileIO.ProjIO.rewrite_model(self.proj_name, self.model_path, self.model)
 
-    def rename(self, target_name):
+    def rename(self, target_model_name: str, target_model_path: str):
         """
-        修改model的名字, 传入的为逻辑名称
+        修改model的名字, 传入新的名称和对应的路径
         """
-        FileIO.ProjIO.rename_model(self.proj_name, self.model_name, target_name)
-        self.model_name = target_name
-
+        self.model_name = target_model_name
+        self.model_path = target_model_path
+        FileIO.ProjIO.rename_model(self.proj_name, self.model_path, target_model_path)
 
     def delete(self):
         """
         删除model文件
         :return:
         """
-        FileIO.ProjIO.delete_model(self.proj_name, self.model_name)
-
+        FileIO.ProjIO.delete_model(self.proj_name, self.model_path)
 
 
 class Api:
     """
     接口对应数据类
     """
+
     def __init__(self, api_name: str):
         pass
 
@@ -115,6 +116,7 @@ class Proj:
 
         self.fresh_models()
         self.fresh_apis()
+        self.fresh_model_config()
 
     def fresh_models(self):
         """
@@ -125,13 +127,37 @@ class Proj:
         for model in models:
             self.models.append(Model(self.proj_name, model['model_name'], model['model']))
 
+    def get_model(self, full_model_name: list):
+        """
+        根据名称获取对应的model对象
+        :param full_model_name: model的全路径 list
+        :return:
+        """
+        path = ''
+        model_name = full_model_name[-1]
+
+        for index, chain_path in enumerate(full_model_name):
+            if index == 0:
+                items = self.model_config
+            else:
+                items = path.get('items')
+
+
+            path = [x for x in items if x.get('name') == chain_path][0]
+
+        model_path = path.get('path')
+        model = Model(self.proj_name, model_name, model_path, FileIO.ProjIO.get_model_data(self.proj_name, model_path))
+        return model
+
+
+
+
     def fresh_model_config(self):
         """
         获取模型配置
         :return:
         """
         self.model_config = FileIO.ProjIO.get_model_config(self.proj_name)
-
 
     def delete_model(self, model_name):
         """
@@ -163,7 +189,8 @@ class Proj:
 
 
 if __name__ == '__main__':
-    proj = Proj('检查系统')
-    for model in proj.models:
-        print(model.model_name)
-        print(model.model)
+    pass
+    # proj = Proj('检查系统')
+    # for model in proj.models:
+    #     print(model.model_name)
+    #     print(model.model)
