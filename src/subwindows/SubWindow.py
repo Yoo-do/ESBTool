@@ -53,23 +53,7 @@ class ModelWindow(QWidget):
         # 主布局，左右窗体
         main_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
 
-        # 模型列表
-        # model_list_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        # main_layout.addLayout(model_list_layout)
-        # main_layout.setStretchFactor(model_list_layout, 1)
-        #
-        # self.model_list = DiyWidgets.ModelListWidget(self)
-        # self.model_list.itemClicked.connect(self.model_selected_event)
-        # model_list_layout.addWidget(self.model_list)
-        #
-        # model_list_button_layout = QBoxLayout(QBoxLayout.LeftToRight)
-        # model_list_layout.addLayout(model_list_button_layout)
-        #
-        # self.model_add_button = QPushButton('新增模型', self)
-        # self.model_add_button.clicked.connect(self.model_list.model_item_add_event)
-        # model_list_button_layout.addWidget(self.model_add_button)
-
-        self.model_list_tree = ModelListWidgets.ModelListTreeView(self)
+        self.model_list_tree = ModelListWidgets.ModelListTreeView(self, self.main_window.curr_proj)
         self.model_list_tree.clicked.connect(self.model_selected_event)
         main_layout.addWidget(self.model_list_tree)
 
@@ -117,16 +101,13 @@ class ModelWindow(QWidget):
         self.model_save_button.setEnabled(False)
 
 
-
-        # self.model_list.clear()
         if self.tree_standard_model is not None:
             self.tree_standard_model.clear()
 
         if self.main_window.curr_proj is not None:
-            self.model_list_tree.fresh_data(self.main_window.curr_proj)
+            self.model_list_tree.fresh_proj(self.main_window.curr_proj)
+            self.model_list_tree.fresh_data()
 
-            # models = [model.model_name for model in self.main_window.curr_proj.models]
-            # self.model_list.addItems(models)
 
         # 提示框删除
         self.main_window.clear_status_info()
@@ -206,11 +187,12 @@ class ModelWindow(QWidget):
         :return:
         """
         try:
+            index = self.model_list_tree.currentIndex()
+            item = self.model_list_tree.model().itemFromIndex(index)
+
             dialog = DiyWidgets.ModelImportDialog(self)
             if dialog.exec_() == QDialog.Accepted:
-                model_name = self.model_list.currentItem().text()
-                curr_model: Data.Model = \
-                [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+                curr_model: Data.Model = self.main_window.curr_proj.get_model(item.get_full_name())
                 data = dialog.data
                 curr_model.import_json(data)
 
@@ -222,9 +204,9 @@ class ModelWindow(QWidget):
 
 
     def model_verify_event(self):
-        model_name = self.model_list.currentItem().text()
-        curr_model: Data.Model = \
-            [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        index = self.model_list_tree.currentIndex()
+        item = self.model_list_tree.model().itemFromIndex(index)
+        curr_model: Data.Model = self.main_window.curr_proj.get_model(item.get_full_name())
 
         dialog = DiyWidgets.ModelVerifyDialog(curr_model)
         dialog.exec_()

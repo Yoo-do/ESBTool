@@ -175,8 +175,8 @@ class ProjIO:
         """
         proj_path = ProjIO.get_proj_path(proj_name)
         models_path = os.path.join(proj_path, 'models')
-        if not os.path.exists(model_path):
-            os.mkdir('models')
+        if not os.path.exists(models_path):
+            os.mkdir(models_path)
 
         model_file_path = os.path.join(models_path, model_path + '.json')
 

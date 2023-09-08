@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QDataStream, QIODevice
 import hashlib
 
 from src.utils import FileIO, Log
@@ -26,6 +26,8 @@ class ModelListStandardItem(QStandardItem):
 
         path.append(self.text())
         return path
+
+
 
 
 class ModelListStandardModel(QStandardItemModel):
@@ -59,7 +61,7 @@ class ModelListStandardModel(QStandardItemModel):
                 item = parent.child(row)
 
             if item.is_dir:
-                dirs.append({"name": self.item(row).text(), "isdir": item.is_dir, "items": self.generate_json(item)})
+                dirs.append({"name": item.text(), "is_dir": item.is_dir, "items": self.generate_json(item)})
             else:
                 # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
                 target_path = hashlib.md5(item.get_full_name().__str__().encode()).hexdigest()
@@ -67,14 +69,15 @@ class ModelListStandardModel(QStandardItemModel):
                 if item.path != target_path:
                     FileIO.ProjIO.rename_model(self.proj_name, item.path, target_path)
 
-                files.append({"name": self.item(row).text(), "isdir": item.is_dir, "path": target_path})
+                files.append({"name": item.text(), "is_dir": item.is_dir, "path": target_path})
 
         return dirs.__add__(files)
 
-
 class ModelListTreeView(QTreeView):
-    def __init__(self, parent):
+    def __init__(self, parent, proj):
         super().__init__(parent)
+
+        self.proj = proj
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -85,16 +88,25 @@ class ModelListTreeView(QTreeView):
 
         self.customContextMenuRequested.connect(self.right_clicked_menu)
 
-    def fresh_data(self, proj):
-        proj.fresh_model_config()
-        model_config = proj.model_config
 
-        model = ModelListStandardModel(proj.proj_name)
+    def fresh_proj(self, proj):
+        self.proj = proj
+
+
+    def fresh_data(self):
+
+        self.proj.fresh_model_config()
+        model_config = self.proj.model_config
+
+        model = ModelListStandardModel(self.proj.proj_name)
 
         # 根据modelConfig文件内容生成树
         self.generate_model(model, model_config)
 
         self.setModel(model)
+
+        # 模型改变即回写
+        # self.model().dataChanged.connect(self.rewrite_model)
 
     def generate_model(self, parent, data: list):
         """
@@ -114,6 +126,7 @@ class ModelListTreeView(QTreeView):
         :return:
         """
         self.model().rewrite_config()
+
 
     def right_clicked_menu(self, pos):
         """
@@ -160,6 +173,7 @@ class ModelListTreeView(QTreeView):
 
     """拖拽控制"""
 
+
     def dropEvent(self, event):
         """
         拖拽后放置控制
@@ -177,11 +191,12 @@ class ModelListTreeView(QTreeView):
             Log.logger.warning(f'模型不允许放置在非文件夹的节点内')
             event.ignore()
             return
+
         super().dropEvent(event)
 
-
-        # 完成拖拽后立即回写模型和文件
         self.rewrite_model()
+
+
 
     """事件"""
 
