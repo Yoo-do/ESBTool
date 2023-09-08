@@ -11,7 +11,7 @@ class ModelListStandardItem(QStandardItem):
         super().__init__(name)
         self.is_dir = is_dir
         self.path = path
-        parent.appendRow(self)
+        parent.appendRow([self])
 
     def get_full_name(self):
         """
@@ -40,6 +40,7 @@ class ModelListStandardModel(QStandardItemModel):
     def rewrite_config(self):
         config_data = self.generate_config()
         FileIO.ProjIO.rewrite_model_config(self.proj_name, config_data)
+
     def generate_config(self):
         """
         生成modelConfig数据
@@ -181,7 +182,6 @@ class ModelListTreeView(QTreeView):
         """
 
         drop_position = self.dropIndicatorPosition()
-
         target_index = self.indexAt(event.pos())
         target_item = self.model().itemFromIndex(target_index)
 
@@ -192,10 +192,20 @@ class ModelListTreeView(QTreeView):
             event.ignore()
             return
 
-        super().dropEvent(event)
+        # super().dropEvent(event)
+        event.accept()
 
-        self.rewrite_model()
+        model = self.model()
+        children = model.children()
+        for row in range(model.rowCount()):
+            cur = model.item(row)
+            node_name = cur.text()
+            node_type = type(cur)
+            node_parent_type = type(cur.parent())
 
+            Log.logger.warning(f'name:{node_name}, type:{node_type}, node_parent_type:{node_parent_type}')
+
+        # self.rewrite_model()
 
 
     """事件"""

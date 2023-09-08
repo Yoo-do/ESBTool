@@ -1,2 +1,8 @@
-[2023-09-08 22:21:21,071] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-09-08 22:21:24,024] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-08 22:54:23,094] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
+[2023-09-08 22:54:25,849] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-08 22:54:28,178] WARNING: file: ModelListWidgets.py line: 206 msg: name:申请单, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
+[2023-09-08 22:54:28,178] WARNING: file: ModelListWidgets.py line: 206 msg: name:病理申请单信息, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
+[2023-09-08 22:54:28,970] WARNING: file: ModelListWidgets.py line: 206 msg: name:申请单, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
+[2023-09-08 22:54:28,972] WARNING: file: ModelListWidgets.py line: 206 msg: name:病理申请单信息, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
+[2023-09-08 22:54:29,960] WARNING: file: ModelListWidgets.py line: 206 msg: name:申请单, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
+[2023-09-08 22:54:29,960] WARNING: file: ModelListWidgets.py line: 206 msg: name:病理申请单信息, type:<class 'src.utils.ModelListWidgets.ModelListStandardItem'>, node_parent_type:<class 'NoneType'>
