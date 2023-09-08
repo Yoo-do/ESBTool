@@ -107,6 +107,20 @@ class ProjIO:
             return json.load(f)
 
     @staticmethod
+    def rewrite_model_config(proj_name, data):
+        """
+        回写modelConfig
+        :param proj_name:
+        :param data:
+        :return:
+        """
+        proj_path = ProjIO.get_proj_path(proj_name)
+        model_config_path = os.path.join(proj_path, 'modelConfig.json')
+
+        with open(model_config_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
+
+    @staticmethod
     def add_model(proj_name, model_path):
         """
         新增model, 此次只需要实际的路径即可, 逻辑名称配置在modelConfig中

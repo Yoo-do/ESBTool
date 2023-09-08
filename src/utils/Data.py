@@ -114,7 +114,7 @@ class Proj:
         self.model_config = {}
         self.apis = []
 
-        self.fresh_models()
+        # self.fresh_models()
         self.fresh_apis()
         self.fresh_model_config()
 
@@ -148,7 +148,6 @@ class Proj:
         model_path = path.get('path')
         model = Model(self.proj_name, model_name, model_path, FileIO.ProjIO.get_model_data(self.proj_name, model_path))
         return model
-
 
 
 

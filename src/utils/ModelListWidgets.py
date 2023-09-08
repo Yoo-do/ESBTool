@@ -1,7 +1,10 @@
 from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt
-from src.utils import FileIO
+import hashlib
+
+from src.utils import FileIO, Log
+
 
 class ModelListStandardItem(QStandardItem):
     def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str = None):
@@ -18,19 +21,55 @@ class ModelListStandardItem(QStandardItem):
         path = []
         parent = self.parent()
         while parent is not None:
-            path.insert(parent.name)
+            path.insert(0, parent.text())
             parent = parent.parent()
 
         path.append(self.text())
         return path
 
 
-
 class ModelListStandardModel(QStandardItemModel):
-    def __init__(self):
+    def __init__(self, proj_name):
         super().__init__()
         self.headers = ['名称']
         self.setHorizontalHeaderLabels(self.headers)
+        self.proj_name = proj_name
+
+    def rewrite_config(self):
+        config_data = self.generate_config()
+        FileIO.ProjIO.rewrite_model_config(self.proj_name, config_data)
+    def generate_config(self):
+        """
+        生成modelConfig数据
+        :return:
+        """
+        # 完成文件夹排序后返回
+        config = self.generate_json(self)
+        return config
+
+    def generate_json(self, parent: ModelListStandardItem):
+        dirs = []
+        files = []
+
+        for row in range(parent.rowCount()):
+            item = None
+            if isinstance(parent, ModelListStandardModel):
+                item = parent.item(row)
+            elif isinstance(parent, ModelListStandardItem):
+                item = parent.child(row)
+
+            if item.is_dir:
+                dirs.append({"name": self.item(row).text(), "isdir": item.is_dir, "items": self.generate_json(item)})
+            else:
+                # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
+                target_path = hashlib.md5(item.get_full_name().__str__().encode()).hexdigest()
+
+                if item.path != target_path:
+                    FileIO.ProjIO.rename_model(self.proj_name, item.path, target_path)
+
+                files.append({"name": self.item(row).text(), "isdir": item.is_dir, "path": target_path})
+
+        return dirs.__add__(files)
 
 
 class ModelListTreeView(QTreeView):
@@ -50,14 +89,12 @@ class ModelListTreeView(QTreeView):
         proj.fresh_model_config()
         model_config = proj.model_config
 
-        model = ModelListStandardModel()
-
+        model = ModelListStandardModel(proj.proj_name)
 
         # 根据modelConfig文件内容生成树
         self.generate_model(model, model_config)
 
         self.setModel(model)
-
 
     def generate_model(self, parent, data: list):
         """
@@ -71,13 +108,19 @@ class ModelListTreeView(QTreeView):
             if item.get('is_dir'):
                 self.generate_model(root, item.get('items'))
 
+    def rewrite_model(self):
+        """
+        树窗体模型回写
+        :return:
+        """
+        self.model().rewrite_config()
+
     def right_clicked_menu(self, pos):
         """
         右击菜单栏
         """
         index = self.indexAt(pos)
         item = self.model().itemFromIndex(index)
-
 
         # 事件定义
         menu = QMenu()
@@ -95,7 +138,6 @@ class ModelListTreeView(QTreeView):
         add_postmodel_action.triggered.connect(self.add_postmodel_event)
         delete_model_action.triggered.connect(self.delete_model_event)
         delete_dir_action.triggered.connect(self.delete_dir_event)
-
 
         if index.isValid():
             if item.is_dir:
@@ -116,7 +158,33 @@ class ModelListTreeView(QTreeView):
 
         menu.exec_(self.viewport().mapToGlobal(pos))
 
+    """拖拽控制"""
+
+    def dropEvent(self, event):
+        """
+        拖拽后放置控制
+        不允许将节点放置到模型节点下
+        """
+
+        drop_position = self.dropIndicatorPosition()
+
+        target_index = self.indexAt(event.pos())
+        target_item = self.model().itemFromIndex(target_index)
+
+        # 放置节点的限制
+        if drop_position == QAbstractItemView.OnItem and target_item.is_dir is False:
+            # 不允许放在model节点内
+            Log.logger.warning(f'模型不允许放置在非文件夹的节点内')
+            event.ignore()
+            return
+        super().dropEvent(event)
+
+
+        # 完成拖拽后立即回写模型和文件
+        self.rewrite_model()
+
     """事件"""
+
     def add_child_model_event(self):
         pass
 
@@ -134,5 +202,3 @@ class ModelListTreeView(QTreeView):
 
     def delete_dir_event(self):
         pass
-
-

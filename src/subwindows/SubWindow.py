@@ -174,14 +174,13 @@ class ModelWindow(QWidget):
         :return:
         """
 
-        # model_name = self.model_list.currentItem().text()
         index = self.model_list_tree.currentIndex()
         item = self.model_list_tree.model().itemFromIndex(index)
+        model_name = item.text()
         if item.is_dir:
             return
 
-        model_name = item.text()
-        self.curr_model = [model for model in self.main_window.curr_proj.models if model.model_name == model_name][0]
+        self.curr_model = self.main_window.curr_proj.get_model(item.get_full_name())
         data = self.curr_model.model
 
         self.fresh_model_detail(data)
