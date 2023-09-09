@@ -713,7 +713,6 @@ class ModelStandardModel(QStandardItemModel):
         if self.rowCount() == 1:
             root = self.item(0)
             data_type = self.item(0, 1).text()
-            data_type = self.item(0, 1).text()
 
             properties, required = self.generate_json(root, True)
             result = {"type": data_type, "properties": properties, "required": required}

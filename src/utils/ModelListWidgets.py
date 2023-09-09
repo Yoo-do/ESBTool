@@ -7,11 +7,26 @@ from src.utils import FileIO, Log
 
 
 class ModelListStandardItem(QStandardItem):
-    def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str = None):
+    def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str = None, row: int = None):
         super().__init__(name)
         self.is_dir = is_dir
         self.path = path
-        parent.appendRow([self])
+
+        # 加入两列方便传值
+        is_dir_item = QStandardItem(is_dir.__str__())
+        path_item = QStandardItem(path)
+
+        if row is None:
+            row = parent.rowCount()
+
+        parent.insertRow(row, self)
+
+        if isinstance(parent, QStandardItemModel):
+            parent.setItem(row, 1, is_dir_item)
+            parent.setItem(row, 2, path_item)
+        elif isinstance(parent, QStandardItem):
+            parent.setChild(row, 1, is_dir_item)
+            parent.setChild(row, 2, path_item)
 
     def get_full_name(self):
         """
@@ -31,48 +46,15 @@ class ModelListStandardItem(QStandardItem):
 
 
 class ModelListStandardModel(QStandardItemModel):
-    def __init__(self, proj_name):
+    def __init__(self):
         super().__init__()
         self.headers = ['名称']
         self.setHorizontalHeaderLabels(self.headers)
-        self.proj_name = proj_name
 
-    def rewrite_config(self):
-        config_data = self.generate_config()
-        FileIO.ProjIO.rewrite_model_config(self.proj_name, config_data)
 
-    def generate_config(self):
-        """
-        生成modelConfig数据
-        :return:
-        """
-        # 完成文件夹排序后返回
-        config = self.generate_json(self)
-        return config
 
-    def generate_json(self, parent: ModelListStandardItem):
-        dirs = []
-        files = []
 
-        for row in range(parent.rowCount()):
-            item = None
-            if isinstance(parent, ModelListStandardModel):
-                item = parent.item(row)
-            elif isinstance(parent, ModelListStandardItem):
-                item = parent.child(row)
 
-            if item.is_dir:
-                dirs.append({"name": item.text(), "is_dir": item.is_dir, "items": self.generate_json(item)})
-            else:
-                # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
-                target_path = hashlib.md5(item.get_full_name().__str__().encode()).hexdigest()
-
-                if item.path != target_path:
-                    FileIO.ProjIO.rename_model(self.proj_name, item.path, target_path)
-
-                files.append({"name": item.text(), "is_dir": item.is_dir, "path": target_path})
-
-        return dirs.__add__(files)
 
 class ModelListTreeView(QTreeView):
     def __init__(self, parent, proj):
@@ -83,11 +65,14 @@ class ModelListTreeView(QTreeView):
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
         self.setDefaultDropAction(Qt.MoveAction)
+        self.setSelectionMode(QTreeView.ExtendedSelection)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.customContextMenuRequested.connect(self.right_clicked_menu)
+
+
 
 
     def fresh_proj(self, proj):
@@ -99,15 +84,19 @@ class ModelListTreeView(QTreeView):
         self.proj.fresh_model_config()
         model_config = self.proj.model_config
 
-        model = ModelListStandardModel(self.proj.proj_name)
+        model = ModelListStandardModel()
 
         # 根据modelConfig文件内容生成树
         self.generate_model(model, model_config)
 
         self.setModel(model)
 
+        # 隐藏传递的数据
+        self.setColumnHidden(1, True)
+        self.setColumnHidden(2, True)
+
         # 模型改变即回写
-        # self.model().dataChanged.connect(self.rewrite_model)
+        self.model().dataChanged.connect(self.rewrite_config)
 
     def generate_model(self, parent, data: list):
         """
@@ -121,12 +110,49 @@ class ModelListTreeView(QTreeView):
             if item.get('is_dir'):
                 self.generate_model(root, item.get('items'))
 
-    def rewrite_model(self):
+    def rewrite_config(self):
         """
-        树窗体模型回写
+        modelConfig文件回写
         :return:
         """
-        self.model().rewrite_config()
+        config = self.generate_config(self.model())
+        FileIO.ProjIO.rewrite_model_config(self.proj.proj_name, config)
+
+    def generate_config(self, parent: ModelListStandardItem):
+        dirs = []
+        files = []
+
+        for row in range(parent.rowCount()):
+            item = None
+            is_dir = None
+            path = None
+            if isinstance(parent, ModelListStandardModel):
+                item = parent.item(row)
+                is_dir = True if parent.item(row, 1).text() == 'True' else False
+                if parent.item(row, 2) is not None:
+                    path = parent.item(row, 2).text()
+            elif isinstance(parent, ModelListStandardItem):
+                item = parent.child(row)
+                is_dir = True if parent.child(row, 1).text() == 'True' else False
+                if parent.child(row, 2) is not None:
+                    path = parent.child(row, 2).text()
+
+            model_name = item.text()
+
+            if is_dir:
+                dirs.append({"name": model_name, "is_dir": is_dir, "items": self.generate_config(item)})
+            else:
+                # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
+                target_path = hashlib.md5(item.get_full_name().__str__().encode()).hexdigest()
+
+                Log.logger.info(f'model_name:{model_name}, is_dir:{is_dir}, path:{path}, target_path:{target_path} ')
+
+                if path != target_path:
+                    FileIO.ProjIO.rename_model(self.proj.proj_name, path, target_path)
+
+                files.append({"name": model_name, "is_dir": is_dir, "path": target_path})
+
+        return dirs.__add__(files)
 
 
     def right_clicked_menu(self, pos):
@@ -192,18 +218,18 @@ class ModelListTreeView(QTreeView):
             event.ignore()
             return
 
-        # super().dropEvent(event)
-        event.accept()
+        super().dropEvent(event)
 
         model = self.model()
-        children = model.children()
         for row in range(model.rowCount()):
             cur = model.item(row)
             node_name = cur.text()
             node_type = type(cur)
             node_parent_type = type(cur.parent())
+            parent = cur.parent() if cur.parent() is not None else self.model()
 
             Log.logger.warning(f'name:{node_name}, type:{node_type}, node_parent_type:{node_parent_type}')
+            Log.logger.warning(f'name:{node_name}, is_dir:{parent.item(row, 1)}, path:{parent.item(row, 2)}')
 
         # self.rewrite_model()
 

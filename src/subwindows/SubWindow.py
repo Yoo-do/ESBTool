@@ -156,7 +156,7 @@ class ModelWindow(QWidget):
         """
 
         index = self.model_list_tree.currentIndex()
-        item = self.model_list_tree.model().itemFromIndex(index)
+        item = self.model_list_tree.model().itemFromIndex(index).parent()
         model_name = item.text()
         if item.is_dir:
             return
