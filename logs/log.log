@@ -1,2 +1,10 @@
-[2023-09-09 14:25:52,529] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-09-09 14:25:55,139] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-09 23:08:33,222] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
+[2023-09-09 23:08:35,236] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-09 23:08:37,837] INFO: file: ModelListWidgets.py line: 101 msg: model_name:患者基本信息, is_dir:False, path:16a200d90b9b8111955325ae26cf1723, target_path:16a200d90b9b8111955325ae26cf1723 
+[2023-09-09 23:08:37,837] INFO: file: ModelListWidgets.py line: 101 msg: model_name:检查申请单信息, is_dir:False, path:bef7d67b930c8c195b99f9908f50602b, target_path:bef7d67b930c8c195b99f9908f50602b 
+[2023-09-09 23:08:37,838] INFO: file: ModelListWidgets.py line: 101 msg: model_name:病理申请单信息, is_dir:False, path:e9ee85daf6b4af4a3f1311cd20bd511f, target_path:c0c60f44c6d2dc0026e752dc2948b684 
+[2023-09-09 23:08:37,838] INFO: file: ModelListWidgets.py line: 104 msg: 检查系统, path:e9ee85daf6b4af4a3f1311cd20bd511f, target_path:c0c60f44c6d2dc0026e752dc2948b684
+[2023-09-09 23:08:42,721] INFO: file: ModelListWidgets.py line: 101 msg: model_name:患者基本信息, is_dir:False, path:16a200d90b9b8111955325ae26cf1723, target_path:3afc375651183ec397265f6305cddbc1 
+[2023-09-09 23:08:42,721] INFO: file: ModelListWidgets.py line: 104 msg: 检查系统, path:16a200d90b9b8111955325ae26cf1723, target_path:3afc375651183ec397265f6305cddbc1
+[2023-09-09 23:08:42,722] INFO: file: ModelListWidgets.py line: 101 msg: model_name:检查申请单信息, is_dir:False, path:bef7d67b930c8c195b99f9908f50602b, target_path:bef7d67b930c8c195b99f9908f50602b 
+[2023-09-09 23:08:42,723] INFO: file: ModelListWidgets.py line: 101 msg: model_name:病理申请单信息, is_dir:False, path:c0c60f44c6d2dc0026e752dc2948b684, target_path:c0c60f44c6d2dc0026e752dc2948b684 

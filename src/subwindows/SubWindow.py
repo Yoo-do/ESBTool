@@ -1,5 +1,7 @@
+from PyQt5.QtCore import QModelIndex
 from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
     QTreeWidget, QTreeWidgetItem, QDialog
+from PyQt5.QtCore import Qt
 from enum import Enum
 from src.utils import Data, DiyWidgets, Log, ModelListWidgets
 
@@ -53,9 +55,18 @@ class ModelWindow(QWidget):
         # 主布局，左右窗体
         main_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
 
+        test_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.model_list_tree = ModelListWidgets.ModelListTreeView(self, self.main_window.curr_proj)
         self.model_list_tree.clicked.connect(self.model_selected_event)
-        main_layout.addWidget(self.model_list_tree)
+        test_layout.addWidget(self.model_list_tree)
+
+        self.btn = QPushButton('刷新模型', self)
+
+        self.btn.clicked.connect(lambda: (self.model_list_tree.rewrite_config(), self.fresh_data()))
+
+        test_layout.addWidget(self.btn)
+
+        main_layout.addLayout(test_layout)
 
         # 模型细节
 
@@ -155,10 +166,21 @@ class ModelWindow(QWidget):
         :return:
         """
 
+
         index = self.model_list_tree.currentIndex()
-        item = self.model_list_tree.model().itemFromIndex(index).parent()
-        model_name = item.text()
-        if item.is_dir:
+        index_parent = index.parent()
+        row = index.row()
+        model = self.model_list_tree.model()
+        model_name = model.data(model.index(row, 0, index_parent), Qt.DisplayRole)
+        is_dir = model.data(model.index(row, 1, index_parent), Qt.DisplayRole)
+        # path = model.data(model.index(row, 2, index_parent), Qt.DisplayRole)
+
+
+        # Log.logger.info(f'选中了[{model_name}]模型,is_dir:{is_dir}, path:{path}')
+
+        item = model.itemFromIndex(model.index(row, 0, index_parent))
+
+        if is_dir == 'True':
             return
 
         self.curr_model = self.main_window.curr_proj.get_model(item.get_full_name())
