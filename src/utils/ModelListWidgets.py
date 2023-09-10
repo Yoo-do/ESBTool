@@ -7,30 +7,11 @@ from src.utils import FileIO, Log
 
 
 class ModelListStandardItem(QStandardItem):
-    def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str = None,
-                 row: int = None):
+    def __init__(self, name: str, is_dir: bool, path: str = None):
         super().__init__(name)
         self.setEditable(False)
         self.is_dir = is_dir
         self.path = path
-
-        # 加入两列方便传值
-        is_dir_item = QStandardItem(is_dir.__str__())
-        is_dir_item.setEditable(False)
-        path_item = QStandardItem(path)
-        path_item.setEditable(False)
-
-        if row is None:
-            row = parent.rowCount()
-
-        parent.insertRow(row, self)
-
-        if isinstance(parent, QStandardItemModel):
-            parent.setItem(row, 1, is_dir_item)
-            parent.setItem(row, 2, path_item)
-        elif isinstance(parent, QStandardItem):
-            parent.setChild(row, 1, is_dir_item)
-            parent.setChild(row, 2, path_item)
 
     def get_full_name(self):
         """
@@ -46,11 +27,32 @@ class ModelListStandardItem(QStandardItem):
         path.append(self.text())
         return path
 
+    def clone(self):
+        """
+        复制对象
+        """
+        new_item = ModelListStandardItem(self.text(), self.is_dir, self.path)
+        self.clone_all(new_item, self)
+
+        return new_item
+
+
+    def clone_all(self, clone_item, self_item):
+        """
+        递归复制对象子对象
+        """
+        for row in range(self_item.rowCount()):
+            curr_item = self_item.child(row)
+            new_item = ModelListStandardItem(curr_item.text(), curr_item.is_dir, clone_item.path)
+            clone_item.appendRow(new_item)
+            if curr_item.rowCount() > 0:
+                self.clone_all(new_item, curr_item)
+
 
 class ModelListStandardModel(QStandardItemModel):
     def __init__(self, proj_name):
         super().__init__()
-        self.headers = ['名称', '文件夹', '路径']
+        self.headers = ['模型']
         self.setHorizontalHeaderLabels(self.headers)
         self.proj_name = proj_name
 
@@ -60,12 +62,12 @@ class ModelListStandardModel(QStandardItemModel):
         回写modelConfig
         """
 
-        config = self.generate_config(self, [])
+        config = self.generate_config(self)
         FileIO.ProjIO.rewrite_model_config(self.proj_name, config)
 
 
 
-    def generate_config(self, parent, curr_path):
+    def generate_config(self, parent):
         """
         递归解析模型展示树
         """
@@ -73,29 +75,25 @@ class ModelListStandardModel(QStandardItemModel):
         files = []
 
         global item
-        global model_name
-        global is_dir
-        global path
 
+        # 获取item
         for row in range(parent.rowCount()):
             if isinstance(parent, ModelListStandardModel):
-                item = parent.item(row, 0)
-                model_name = parent.item(row, 0).text()
-                is_dir = True if parent.item(row, 1).text() == 'True' else False
-                if parent.item(row, 2) is not None:
-                    path = parent.item(row, 2).text()
+                item = parent.item(row)
             elif isinstance(parent, ModelListStandardItem):
-                item = parent.child(row, 0)
-                model_name = parent.child(row, 0).text()
-                is_dir = True if parent.child(row, 1).text() == 'True' else False
-                if parent.child(row, 2) is not None:
-                    path = parent.child(row, 2).text()
+                item = parent.child(row)
 
-            # 定义当前逻辑路径
-            full_path = curr_path + [model_name]
+
+            # 获取item的属性值
+            model_name = item.text()
+            is_dir = item.is_dir
+            path = item.path
+            full_path = item.get_full_name()
+
 
             if is_dir:
-                dirs.append({"name": model_name, "is_dir": is_dir, "items": self.generate_config(item, full_path)})
+                # 文件夹的话需要递归
+                dirs.append({"name": model_name, "is_dir": is_dir, "items": self.generate_config(item)})
             else:
                 # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
                 target_path = hashlib.md5(full_path.__str__().encode()).hexdigest()
@@ -125,42 +123,35 @@ class ModelListTreeView(QTreeView):
 
         self.customContextMenuRequested.connect(self.right_clicked_menu)
 
-
-    def set_standard_model(self, model):
-        """
-        保存model对象
-        """
-
-        self.standard_model = model
-        self.setModel(model)
-
     def fresh_proj(self, proj):
         self.proj = proj
 
-    def fresh_data(self):
+    def fresh_data(self, expanded_indexes: list[QModelIndex] = None):
+        """
+        刷新窗体数据，如果传入了expand_index,则展开该文件夹
+        """
 
         if self.standard_model is not None:
+            # 清除已有数据
             self.standard_model.clear()
 
+        # 刷新model配置信息
         self.proj.fresh_model_config()
-        model_config = self.proj.model_config
 
+        # 创建model
         model = ModelListStandardModel(self.proj.proj_name)
-
-        # 根据modelConfig文件内容生成树
-        self.generate_model(model, model_config)
-
-        self.standard_model = model
-
+        # 根据modelConfig文件内容生成树,填充model内容
+        self.generate_model(model, self.proj.model_config)
         # 设置model
-        self.set_standard_model(model)
+        self.setModel(model)
 
-        # 隐藏传递的数据
-        # self.setColumnHidden(1, True)
-        # self.setColumnHidden(2, True)
-
-        # 模型改变即回写
-        # self.model().dataChanged.connect(self.rewrite_config)
+        if expanded_indexes is not None:
+            """如果传入已展开的index则依次展开 待测试"""
+            for expand_index in expanded_indexes:
+                if expand_index.isValid():
+                    self.expand(self.model().index(expand_index.row(), expand_index.column()))
+                else:
+                    Log.logger.info(f'展开QModelIndex无效, row:{expand_index.row()}, column:{expand_index.column()}')
 
     def generate_model(self, parent, data: list):
         """
@@ -170,7 +161,8 @@ class ModelListTreeView(QTreeView):
         :return:
         """
         for item in data:
-            root = ModelListStandardItem(parent, item.get('name'), item.get('is_dir'), item.get('path'))
+            root = ModelListStandardItem(item.get('name'), item.get('is_dir'), item.get('path'))
+            parent.appendRow(root)
             if item.get('is_dir'):
                 self.generate_model(root, item.get('items'))
 
@@ -180,11 +172,27 @@ class ModelListTreeView(QTreeView):
         :return:
         """
 
-        # 防止拖拽的时候重复
-        self.model().deleteLater()
+        self.model().rewrite_config()
+        self.fresh_data(self.get_expanded_indexes())
 
-        self.standard_model.rewrite_config()
-        self.fresh_data()
+    def get_expanded_indexes(self):
+        expanded_indexes = []
+        model = self.model()
+        def traverse(index):
+            if index.isValid():
+                # 检查节点是否展开
+                if self.isExpanded(index):
+                    expanded_indexes.append(index)
+
+                # 遍历子节点
+                for row in range(model.rowCount(index)):
+                    child_index = model.index(row, 0, index)
+                    traverse(child_index)
+
+        traverse(model.index(0, 0))
+
+        return expanded_indexes
+
 
     def right_clicked_menu(self, pos):
         """
@@ -245,14 +253,38 @@ class ModelListTreeView(QTreeView):
         target_index = self.indexAt(event.pos())
         target_item = self.model().itemFromIndex(target_index)
 
-        # 放置节点的限制
-        if drop_position == QAbstractItemView.OnItem and target_item.is_dir is False:
-            # 不允许放在model节点内
-            Log.logger.warning(f'模型不允许放置在非文件夹的节点内')
-            event.ignore()
-            return
 
-        super().dropEvent(event)
+        # 放置节点的限制 重构创建和删除方法后就无法调用父级dropEvent方法，只能自己枚举重构
+        if drop_position == QAbstractItemView.OnItem:
+            if target_item.is_dir is False:
+                # 不允许放在model节点内
+                event.ignore()
+                return
+            else:
+                if target_item is not None:
+                    target_item.appendRow(source_item.clone())
+                else:
+                    self.model().appendRow(source_item.clone())
+
+        elif drop_position == QAbstractItemView.AboveItem:
+            """拖拽到上方时"""
+            parent = target_item.parent()
+            if parent is None:
+                parent = self.model()
+
+            parent.insertRow(target_index.row(), source_item.clone())
+
+        elif drop_position == QAbstractItemView.BelowItem:
+            """拖拽到下方时"""
+            parent = target_item.parent()
+            if parent is None:
+                parent = self.model()
+
+            parent.insertRow(target_index.row() + 1, source_item.clone())
+
+        elif drop_position == QAbstractItemView.OnViewport:
+            """拖拽到空白处"""
+            self.model().insertRow(self.model().rowCount(), source_item.clone())
 
         # 移除原结点
         if source_item.parent() is not None:
@@ -260,9 +292,9 @@ class ModelListTreeView(QTreeView):
         else:
             self.model().removeRow(source_item.row())
 
+        event.accept()
 
         self.rewrite_config()
-
 
 
 

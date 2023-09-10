@@ -55,18 +55,13 @@ class ModelWindow(QWidget):
         # 主布局，左右窗体
         main_layout = QBoxLayout(QBoxLayout.LeftToRight, self)
 
-        test_layout = QBoxLayout(QBoxLayout.TopToBottom)
+
         self.model_list_tree = ModelListWidgets.ModelListTreeView(self, self.main_window.curr_proj)
         self.model_list_tree.clicked.connect(self.model_selected_event)
-        test_layout.addWidget(self.model_list_tree)
+        main_layout.addWidget(self.model_list_tree)
 
-        self.btn = QPushButton('刷新模型', self)
 
-        self.btn.clicked.connect(lambda: (self.model_list_tree.rewrite_config(), self.fresh_data()))
 
-        test_layout.addWidget(self.btn)
-
-        main_layout.addLayout(test_layout)
 
         # 模型细节
 
@@ -168,19 +163,11 @@ class ModelWindow(QWidget):
 
 
         index = self.model_list_tree.currentIndex()
-        index_parent = index.parent()
-        row = index.row()
-        model = self.model_list_tree.model()
-        model_name = model.data(model.index(row, 0, index_parent), Qt.DisplayRole)
-        is_dir = model.data(model.index(row, 1, index_parent), Qt.DisplayRole)
-        # path = model.data(model.index(row, 2, index_parent), Qt.DisplayRole)
+        item = self.model_list_tree.model().itemFromIndex(index)
 
-
-        # Log.logger.info(f'选中了[{model_name}]模型,is_dir:{is_dir}, path:{path}')
-
-        item = model.itemFromIndex(model.index(row, 0, index_parent))
-
-        if is_dir == 'True':
+        if item.is_dir:
+            # 文件夹的话则展开
+            self.model_list_tree.expand(index)
             return
 
         self.curr_model = self.main_window.curr_proj.get_model(item.get_full_name())
@@ -194,7 +181,7 @@ class ModelWindow(QWidget):
         self.model_verify_button.setEnabled(True)
         self.model_save_button.setEnabled(True)
 
-        self.main_window.show_status_info(f'已选中模型[{model_name}]')
+        self.main_window.show_status_info(f'已选中模型[{item.text()}]')
 
     def model_save_event(self):
         """保存事件"""
