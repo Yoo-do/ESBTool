@@ -123,6 +123,12 @@ class ModelWindow(QWidget):
         刷新节点数据
         """
         if data is None:
+            # 按钮状态调整
+            self.model_import_button.setEnabled(False)
+            self.model_verify_button.setEnabled(False)
+            self.model_save_button.setEnabled(False)
+            if self.tree_standard_model is not None:
+                self.tree_standard_model.clear()
             return
 
         self.tree_standard_model = DiyWidgets.ModelStandardModel()
@@ -168,6 +174,7 @@ class ModelWindow(QWidget):
         if item.is_dir:
             # 文件夹的话则展开
             self.model_list_tree.expand(index)
+            self.fresh_model_detail(None)
             return
 
         self.curr_model = self.main_window.curr_proj.get_model(item.get_full_name())

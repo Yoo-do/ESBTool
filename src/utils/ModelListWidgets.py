@@ -208,7 +208,10 @@ class ModelListTreeView(QTreeView):
         add_premodel_action = QAction('在前面插入模型', menu)
         add_postmodel_action = QAction('在后面插入模型', menu)
         delete_model_action = QAction("删除模型", menu)
+        duplicate_model_action = QAction("复制模型", menu)
+        rename_model_action = QAction("重命名模型", menu)
         delete_dir_action = QAction("删除文件夹", menu)
+        rename_dir_action = QAction("重命名文件夹", menu)
 
         # 绑定事件
         add_child_model_action.triggered.connect(self.add_child_model_event)
@@ -216,20 +219,25 @@ class ModelListTreeView(QTreeView):
         add_premodel_action.triggered.connect(self.add_premodel_event)
         add_postmodel_action.triggered.connect(self.add_postmodel_event)
         delete_model_action.triggered.connect(self.delete_model_event)
+        duplicate_model_action.triggered.connect(self.duplicate_model_event)
+        rename_model_action.triggered.connect(self.rename_model_event)
         delete_dir_action.triggered.connect(self.delete_dir_event)
+        rename_dir_action.triggered.connect(self.rename_dir_event)
 
         if index.isValid():
             if item.is_dir:
-                # 右击文件夹
+                # 右击文件夹 新增模型、新增文件夹、重命名文件夹、删除文件夹
                 menu.addAction(add_child_model_action)
                 menu.addAction(add_child_dir_action)
+                menu.addAction(rename_dir_action)
                 menu.addAction(delete_dir_action)
             else:
-                # 右击模型
+                # 右击模型 在前面插入模型、在后面插入模型、复制模型、重命名模型、删除模型
                 menu.addAction(add_premodel_action)
                 menu.addAction(add_postmodel_action)
+                menu.addAction(duplicate_model_action)
+                menu.addAction(rename_model_action)
                 menu.addAction(delete_model_action)
-
         else:
             # 点击空白处显示新增模型或者新增文件夹
             menu.addAction(add_child_model_action)
@@ -296,7 +304,47 @@ class ModelListTreeView(QTreeView):
 
         self.rewrite_config()
 
+    def is_name_exists(self, name_path: list, name: str) -> bool:
+        """
+        name_path为目标层级，例如根层级为[] 判断该层级是否有重名
+        """
 
+        curr_path = self.proj.model_config
+        print(name)
+
+        if len(name_path) > 0:
+            for curr_name in name_path:
+                print(curr_path)
+                curr_path = [path for path in curr_path if path.get('name') == curr_name][0].get('items')
+
+        names = [path.get('name') for path in curr_path]
+        print(name)
+        print(names)
+
+        if name in names:
+            return False
+        else:
+            return True
+
+    def generate_new_name(self, name_path: list, name: str = None) -> str:
+        """
+        生成新名称，若传入name，则根据name取新名称
+        """
+        print(f'{name_path}, {name}')
+        num = 1
+        if len(name) == 0:
+            new_name = 'new ' + num.__str__()
+            while not self.is_name_exists(name_path, new_name):
+                num += 1
+                new_name = 'new ' + num.__str__()
+            return new_name
+        else:
+            num += 1
+            new_name = name + f'({num.__str__()})'
+            while not self.is_name_exists(name_path, new_name):
+                num += 1
+                new_name = name + f'({num.__str__()})'
+            return new_name
 
     """事件"""
 
@@ -304,7 +352,21 @@ class ModelListTreeView(QTreeView):
         pass
 
     def add_child_dir_event(self):
-        pass
+
+
+        if len(self.selectedIndexes()) == 0:
+            """即选中空白处"""
+            name = self.generate_new_name([], '文件夹 ')
+            item = ModelListStandardItem(name, True)
+            self.model().appendRow(item)
+        else:
+            index = self.currentIndex().parent()
+            parent = self.model().itemFromIndex(index)
+            name = self.generate_new_name(parent.get_full_name, '文件夹 ')
+            item = ModelListStandardItem(name, True)
+            index.appendRow(item)
+
+        self.rewrite_config()
 
     def add_premodel_event(self):
         pass
@@ -315,5 +377,14 @@ class ModelListTreeView(QTreeView):
     def delete_model_event(self):
         pass
 
+    def duplicate_model_event(self):
+        pass
+
+    def rename_model_event(self):
+        pass
+
     def delete_dir_event(self):
+        pass
+
+    def rename_dir_event(self):
         pass
