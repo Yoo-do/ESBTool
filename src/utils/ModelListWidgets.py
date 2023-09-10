@@ -51,6 +51,7 @@ class ModelListStandardModel(QStandardItemModel):
         self.setHorizontalHeaderLabels(self.headers)
         self.proj_name = proj_name
 
+
     def rewrite_config(self):
         """
         回写modelConfig
@@ -126,6 +127,7 @@ class ModelListTreeView(QTreeView):
 
         self.customContextMenuRequested.connect(self.right_clicked_menu)
 
+
     def set_standard_model(self, model):
         """
         保存model对象
@@ -160,7 +162,7 @@ class ModelListTreeView(QTreeView):
         # self.setColumnHidden(2, True)
 
         # 模型改变即回写
-        # self.standard_model.dataChanged.connect(self.rewrite_config)
+        # self.model().dataChanged.connect(self.rewrite_config)
 
     def generate_model(self, parent, data: list):
         """
@@ -233,6 +235,10 @@ class ModelListTreeView(QTreeView):
         不允许将节点放置到模型节点下
         """
 
+        # 获取拖放操作的源节点
+        source_index = event.source().currentIndex()
+        source_item = self.model().itemFromIndex(source_index)
+
         drop_position = self.dropIndicatorPosition()
         target_index = self.indexAt(event.pos())
         target_item = self.model().itemFromIndex(target_index)
@@ -244,9 +250,18 @@ class ModelListTreeView(QTreeView):
             event.ignore()
             return
 
-        print(type(event.mimeData()))
-
         super().dropEvent(event)
+
+        # 移除原结点
+        if source_item.parent() is not None:
+            source_item.parent().removeRow(source_item.row())
+        else:
+            self.model().removeRow(source_item.row())
+
+        self.model().deleteLater()
+        self.rewrite_config()
+
+
 
 
     """事件"""
