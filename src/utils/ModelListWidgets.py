@@ -10,12 +10,15 @@ class ModelListStandardItem(QStandardItem):
     def __init__(self, parent: QStandardItemModel | QStandardItem, name: str, is_dir: bool, path: str = None,
                  row: int = None):
         super().__init__(name)
+        self.setEditable(False)
         self.is_dir = is_dir
         self.path = path
 
         # 加入两列方便传值
         is_dir_item = QStandardItem(is_dir.__str__())
+        is_dir_item.setEditable(False)
         path_item = QStandardItem(path)
+        path_item.setEditable(False)
 
         if row is None:
             row = parent.rowCount()
@@ -47,7 +50,7 @@ class ModelListStandardItem(QStandardItem):
 class ModelListStandardModel(QStandardItemModel):
     def __init__(self, proj_name):
         super().__init__()
-        self.headers = ['名称']
+        self.headers = ['名称', '文件夹', '路径']
         self.setHorizontalHeaderLabels(self.headers)
         self.proj_name = proj_name
 
@@ -88,8 +91,6 @@ class ModelListStandardModel(QStandardItemModel):
                 if parent.child(row, 2) is not None:
                     path = parent.child(row, 2).text()
 
-            print(f'{model_name}, {curr_path}')
-
             # 定义当前逻辑路径
             full_path = curr_path + [model_name]
 
@@ -98,11 +99,8 @@ class ModelListStandardModel(QStandardItemModel):
             else:
                 # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
                 target_path = hashlib.md5(full_path.__str__().encode()).hexdigest()
-
-                Log.logger.info(f'model_name:{model_name}, is_dir:{is_dir}, path:{path}, target_path:{target_path} ')
-
+                
                 if path != target_path:
-                    Log.logger.info(f'{self.proj_name}, path:{path}, target_path:{target_path}')
                     FileIO.ProjIO.rename_model(self.proj_name, path, target_path)
 
                 files.append({"name": model_name, "is_dir": is_dir, "path": target_path})
@@ -181,6 +179,10 @@ class ModelListTreeView(QTreeView):
         modelConfig文件回写
         :return:
         """
+
+        # 防止拖拽的时候重复
+        self.model().deleteLater()
+
         self.standard_model.rewrite_config()
         self.fresh_data()
 
@@ -258,7 +260,7 @@ class ModelListTreeView(QTreeView):
         else:
             self.model().removeRow(source_item.row())
 
-        self.model().deleteLater()
+
         self.rewrite_config()
 
 
