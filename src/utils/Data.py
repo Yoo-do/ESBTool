@@ -1,10 +1,9 @@
 """
 数据模型层，为前端窗体提供数据结构支持
 """
-
 import json
 import jsonschema
-from src.utils import FileIO
+from src.utils import FileIO, Log
 
 ModelDataTypes = ['object', 'array', 'integer', 'number', 'string', 'boolean']
 
@@ -82,14 +81,6 @@ class Model:
         self.model = data
         FileIO.ProjIO.rewrite_model(self.proj_name, self.model_path, self.model)
 
-    def rename(self, target_model_name: str, target_model_path: str):
-        """
-        修改model的名字, 传入新的名称和对应的路径
-        """
-        self.model_name = target_model_name
-        self.model_path = target_model_path
-        FileIO.ProjIO.rename_model(self.proj_name, self.model_path, target_model_path)
-
     def delete(self):
         """
         删除model文件
@@ -110,22 +101,11 @@ class Api:
 class Proj:
     def __init__(self, proj_name):
         self.proj_name = proj_name
-        self.models = []
         self.model_config = {}
         self.apis = []
 
-        # self.fresh_models()
         self.fresh_apis()
         self.fresh_model_config()
-
-    def fresh_models(self):
-        """
-        获取全部模型
-        """
-        self.models.clear()
-        models = FileIO.ProjIO.get_models(self.proj_name)
-        for model in models:
-            self.models.append(Model(self.proj_name, model['model_name'], model['model']))
 
     def get_model(self, full_model_name: list):
         """
@@ -142,14 +122,11 @@ class Proj:
             else:
                 items = path.get('items')
 
-
             path = [x for x in items if x.get('name') == chain_path][0]
 
         model_path = path.get('path')
         model = Model(self.proj_name, model_name, model_path, FileIO.ProjIO.get_model_data(self.proj_name, model_path))
         return model
-
-
 
     def fresh_model_config(self):
         """
@@ -158,24 +135,30 @@ class Proj:
         """
         self.model_config = FileIO.ProjIO.get_model_config(self.proj_name)
 
-    def delete_model(self, model_name):
+    def delete_model(self, full_model_name):
         """
         删除项目中的模型
-        :param model_name:
+        :param full_model_name:
         :return:
         """
-        target_model = [model for model in self.models if model.model_name == model_name][0]
-        self.models.remove(target_model)
+        target_model = self.get_model(full_model_name)
         target_model.delete()
+        Log.logger.info(f'项目 [{self.proj_name}] 删除了模型 [{full_model_name[-1]}]')
+        self.fresh_model_config()
 
-    def add_model(self, model_name):
+
+    def add_model(self, full_model_name):
         """
         项目中新增模型
-        :param model_name:
+        :param full_model_name: 当前模型的全逻辑路径
         :return:
         """
-        FileIO.ProjIO.add_model(self.proj_name, model_name)
-        self.fresh_models()
+        model_path = FileIO.ProjIO.get_model_path_by_full_name(full_model_name)
+        FileIO.ProjIO.add_model(self.proj_name, model_path)
+        Log.logger.info(f'项目 [{self.proj_name}] 新增了模型 [{full_model_name[-1]}] ')
+        self.fresh_model_config()
+
+
 
     def fresh_apis(self):
         """

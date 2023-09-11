@@ -1,7 +1,7 @@
 """
 IO层，负责为Data层的数据类提供IO操作
 """
-
+import hashlib
 import json
 import os
 import path_lead
@@ -132,10 +132,10 @@ class ProjIO:
 
         model_file_path = os.path.join(models_path, model_path + '.json')
 
-        if not os.path.exists(model_file_path):
-            data = {"type": "object", "properties": {}, "required": []}
-            with open(model_file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False)
+        # 不论原来是否存在，直接重写
+        data = {"type": "object", "properties": {}, "required": []}
+        with open(model_file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
 
     @staticmethod
     def delete_model(proj_name, model_path):
@@ -186,6 +186,12 @@ class ProjIO:
         with open(model_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False)
 
+    @staticmethod
+    def get_model_path_by_full_name(full_model_name: []):
+        """
+        通过逻辑路径获取实际路径
+        """
+        return hashlib.md5(full_model_name.__str__().encode()).hexdigest()
 
 if __name__ == '__main__':
     pass

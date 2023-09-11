@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView
+from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView, QDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex
-import hashlib
 
 from src.utils import FileIO, Log
 
@@ -36,7 +35,6 @@ class ModelListStandardItem(QStandardItem):
 
         return new_item
 
-
     def clone_all(self, clone_item, self_item):
         """
         递归复制对象子对象
@@ -56,7 +54,6 @@ class ModelListStandardModel(QStandardItemModel):
         self.setHorizontalHeaderLabels(self.headers)
         self.proj_name = proj_name
 
-
     def rewrite_config(self):
         """
         回写modelConfig
@@ -64,8 +61,6 @@ class ModelListStandardModel(QStandardItemModel):
 
         config = self.generate_config(self)
         FileIO.ProjIO.rewrite_model_config(self.proj_name, config)
-
-
 
     def generate_config(self, parent):
         """
@@ -83,21 +78,19 @@ class ModelListStandardModel(QStandardItemModel):
             elif isinstance(parent, ModelListStandardItem):
                 item = parent.child(row)
 
-
             # 获取item的属性值
             model_name = item.text()
             is_dir = item.is_dir
             path = item.path
-            full_path = item.get_full_name()
-
+            full_model_name = item.get_full_name()
 
             if is_dir:
                 # 文件夹的话需要递归
                 dirs.append({"name": model_name, "is_dir": is_dir, "items": self.generate_config(item)})
             else:
                 # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
-                target_path = hashlib.md5(full_path.__str__().encode()).hexdigest()
-                
+                target_path = FileIO.ProjIO.get_model_path_by_full_name(full_model_name)
+
                 if path != target_path:
                     FileIO.ProjIO.rename_model(self.proj_name, path, target_path)
 
@@ -178,6 +171,7 @@ class ModelListTreeView(QTreeView):
     def get_expanded_indexes(self):
         expanded_indexes = []
         model = self.model()
+
         def traverse(index):
             if index.isValid():
                 # 检查节点是否展开
@@ -192,7 +186,6 @@ class ModelListTreeView(QTreeView):
         traverse(model.index(0, 0))
 
         return expanded_indexes
-
 
     def right_clicked_menu(self, pos):
         """
@@ -220,9 +213,9 @@ class ModelListTreeView(QTreeView):
         add_postmodel_action.triggered.connect(self.add_postmodel_event)
         delete_model_action.triggered.connect(self.delete_model_event)
         duplicate_model_action.triggered.connect(self.duplicate_model_event)
-        rename_model_action.triggered.connect(self.rename_model_event)
+        rename_model_action.triggered.connect(self.rename_event)
         delete_dir_action.triggered.connect(self.delete_dir_event)
-        rename_dir_action.triggered.connect(self.rename_dir_event)
+        rename_dir_action.triggered.connect(self.rename_event)
 
         if index.isValid():
             if item.is_dir:
@@ -260,7 +253,6 @@ class ModelListTreeView(QTreeView):
         drop_position = self.dropIndicatorPosition()
         target_index = self.indexAt(event.pos())
         target_item = self.model().itemFromIndex(target_index)
-
 
         # 放置节点的限制 重构创建和删除方法后就无法调用父级dropEvent方法，只能自己枚举重构
         if drop_position == QAbstractItemView.OnItem:
@@ -310,38 +302,33 @@ class ModelListTreeView(QTreeView):
         """
 
         curr_path = self.proj.model_config
-        print(name)
 
         if len(name_path) > 0:
             for curr_name in name_path:
-                print(curr_path)
                 curr_path = [path for path in curr_path if path.get('name') == curr_name][0].get('items')
 
         names = [path.get('name') for path in curr_path]
-        print(name)
-        print(names)
 
         if name in names:
-            return False
-        else:
             return True
+        else:
+            return False
 
     def generate_new_name(self, name_path: list, name: str = None) -> str:
         """
         生成新名称，若传入name，则根据name取新名称
         """
-        print(f'{name_path}, {name}')
         num = 1
-        if len(name) == 0:
+        if len(name_path) == 0:
             new_name = 'new ' + num.__str__()
-            while not self.is_name_exists(name_path, new_name):
+            while self.is_name_exists(name_path, new_name):
                 num += 1
                 new_name = 'new ' + num.__str__()
             return new_name
         else:
             num += 1
             new_name = name + f'({num.__str__()})'
-            while not self.is_name_exists(name_path, new_name):
+            while self.is_name_exists(name_path, new_name):
                 num += 1
                 new_name = name + f'({num.__str__()})'
             return new_name
@@ -349,20 +336,37 @@ class ModelListTreeView(QTreeView):
     """事件"""
 
     def add_child_model_event(self):
-        pass
+        """
+        新增模型
+        """
+        if len(self.selectedIndexes()) == 0:
+            """即选中空白处"""
+            name = self.generate_new_name([])
+            item = ModelListStandardItem(name, False, '')
+            self.model().appendRow(item)
+        else:
+            index = self.currentIndex()
+            parent = self.model().itemFromIndex(index)
+            name = self.generate_new_name(parent.get_full_name())
+            item = ModelListStandardItem(name, False, '')
+            index.appendRow(item)
+
+        self.proj.add_model(item.get_full_name())
+        self.rewrite_config()
 
     def add_child_dir_event(self):
-
-
+        """
+        新增文件夹
+        """
         if len(self.selectedIndexes()) == 0:
             """即选中空白处"""
             name = self.generate_new_name([], '文件夹 ')
             item = ModelListStandardItem(name, True)
             self.model().appendRow(item)
         else:
-            index = self.currentIndex().parent()
+            index = self.currentIndex()
             parent = self.model().itemFromIndex(index)
-            name = self.generate_new_name(parent.get_full_name, '文件夹 ')
+            name = self.generate_new_name(parent.get_full_name(), '文件夹 ')
             item = ModelListStandardItem(name, True)
             index.appendRow(item)
 
@@ -375,16 +379,53 @@ class ModelListTreeView(QTreeView):
         pass
 
     def delete_model_event(self):
-        pass
+        """
+        删除模型
+        """
+        index = self.currentIndex()
+        item = self.model().itemFromIndex(index)
+        self.proj.delete_model(item.get_full_name())
+
+        if item.parent() is not None:
+            item.parent().removeRow(index.row())
+        else:
+            self.model().removeRow(index.row())
+
+        self.rewrite_config()
 
     def duplicate_model_event(self):
         pass
 
-    def rename_model_event(self):
-        pass
+    def rename_event(self):
+        """
+        重命名模型
+        """
+        index = self.currentIndex()
+        item = self.model().itemFromIndex(index)
+        model_name = item.text()
+        model_name_path = item.get_full_name()
+        model_name_path.pop()
+
+        target_model_name, ok = QInputDialog.getText(self, '重命名', '请输入新的名称:', text=model_name)
+        if ok:
+            if self.is_name_exists(model_name_path, target_model_name) and model_name != target_model_name:
+                QMessageBox.critical(self, '错误消息', '该名称已重复')
+            else:
+                item.setText(target_model_name)
+                Log.logger.info(f'{"文件夹" if item.is_dir else "模型"} [{model_name}] 更名为 [{target_model_name}]')
+
+        self.rewrite_config()
 
     def delete_dir_event(self):
-        pass
+        """
+        删除文件夹，文件夹内部的文件只是在配置中删除了，没有实际物理删除
+        """
+        index = self.currentIndex()
+        item = self.model().itemFromIndex(index)
 
-    def rename_dir_event(self):
-        pass
+        if item.parent() is not None:
+            item.parent().removeRow(index.row())
+        else:
+            self.model().removeRow(index.row())
+
+        self.rewrite_config()
