@@ -1,2 +1,3 @@
-[2023-09-11 20:50:10,929] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-09-11 20:50:13,501] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-13 00:07:45,660] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
+[2023-09-13 00:07:48,301] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
+[2023-09-13 00:07:52,339] INFO: file: Data.py line: 146 msg: 项目 [检查系统] 删除了模型 [new 1(2)]

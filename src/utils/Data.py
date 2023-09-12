@@ -158,6 +158,23 @@ class Proj:
         Log.logger.info(f'项目 [{self.proj_name}] 新增了模型 [{full_model_name[-1]}] ')
         self.fresh_model_config()
 
+    def duplicate_model(self, full_mode_name, new_model_name):
+        """
+        复制新的模型， 并返回实际路径
+        """
+        data = self.get_model(full_mode_name).model
+        source_model_name = full_mode_name[-1]
+        full_mode_name[-1] = new_model_name
+        model_path = FileIO.ProjIO.get_model_path_by_full_name(full_mode_name)
+
+        FileIO.ProjIO.add_model(self.proj_name, model_path)
+        FileIO.ProjIO.rewrite_model(self.proj_name, model_path, data)
+
+        Log.logger.info(f'复制模型 [{source_model_name}] 生成 [{new_model_name}]')
+
+        return model_path
+
+
 
 
     def fresh_apis(self):

@@ -119,7 +119,7 @@ class ModelListTreeView(QTreeView):
     def fresh_proj(self, proj):
         self.proj = proj
 
-    def fresh_data(self, expanded_indexes: list[QModelIndex] = None):
+    def fresh_data(self, expanded_dirs: list[{}] = None):
         """
         刷新窗体数据，如果传入了expand_index,则展开该文件夹
         """
@@ -138,13 +138,8 @@ class ModelListTreeView(QTreeView):
         # 设置model
         self.setModel(model)
 
-        if expanded_indexes is not None:
-            """如果传入已展开的index则依次展开 待测试"""
-            for expand_index in expanded_indexes:
-                if expand_index.isValid():
-                    self.expand(self.model().index(expand_index.row(), expand_index.column()))
-                else:
-                    Log.logger.info(f'展开QModelIndex无效, row:{expand_index.row()}, column:{expand_index.column()}')
+        if expanded_dirs is not None:
+            self.expend_dirs(expanded_dirs)
 
     def generate_model(self, parent, data: list):
         """
@@ -166,26 +161,48 @@ class ModelListTreeView(QTreeView):
         """
 
         self.model().rewrite_config()
-        self.fresh_data(self.get_expanded_indexes())
+        self.fresh_data(self.get_expanded_dirs())
 
-    def get_expanded_indexes(self):
-        expanded_indexes = []
-        model = self.model()
-
-        def traverse(index):
-            if index.isValid():
-                # 检查节点是否展开
-                if self.isExpanded(index):
-                    expanded_indexes.append(index)
-
+    def get_expanded_dirs(self):
+        def traverse(parent: QModelIndex, dirs):
+            # 检查节点是否展开
+            if self.isExpanded(parent):
+                items = []
                 # 遍历子节点
-                for row in range(model.rowCount(index)):
-                    child_index = model.index(row, 0, index)
-                    traverse(child_index)
+                item = self.model().itemFromIndex(parent)
+                for row in range(item.rowCount()):
+                    traverse(item.child(row).index(), items)
+                dirs.append({"name": self.model().itemFromIndex(parent).text(), "items": items})
 
-        traverse(model.index(0, 0))
+        expanded_dirs = []
 
-        return expanded_indexes
+
+        traverse(self.model().index(0, 0), expanded_dirs)
+
+        print(expanded_dirs)
+        return expanded_dirs
+
+    def expend_dirs(self, expanded_dirs: list, parent_index: QModelIndex=None):
+        """
+        按传进来的文件夹递归展开 expanded_dirs : [{"name":, "items"[{}]}]
+        """
+        if len(expanded_dirs) == 0:
+            return
+
+        dir_names = [dir.get('name') for dir in expanded_dirs]
+        if parent_index is None:
+            print(expanded_dirs)
+            parent_index = self.model()
+
+        for row in range(parent_index.rowCount()):
+            index = parent_index.index(row, 0)
+            item = parent_index.itemFromIndex(index)
+            if item.is_dir and item.text() in dir_names:
+                # 展开对应文件夹
+                self.expand(index)
+                print(f'expand{item.text()}')
+                self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0])
+
 
     def right_clicked_menu(self, pos):
         """
@@ -319,7 +336,7 @@ class ModelListTreeView(QTreeView):
         生成新名称，若传入name，则根据name取新名称
         """
         num = 1
-        if len(name_path) == 0:
+        if name is None:
             new_name = 'new ' + num.__str__()
             while self.is_name_exists(name_path, new_name):
                 num += 1
@@ -349,7 +366,7 @@ class ModelListTreeView(QTreeView):
             parent = self.model().itemFromIndex(index)
             name = self.generate_new_name(parent.get_full_name())
             item = ModelListStandardItem(name, False, '')
-            index.appendRow(item)
+            parent.appendRow(item)
 
         self.proj.add_model(item.get_full_name())
         self.rewrite_config()
@@ -368,7 +385,7 @@ class ModelListTreeView(QTreeView):
             parent = self.model().itemFromIndex(index)
             name = self.generate_new_name(parent.get_full_name(), '文件夹 ')
             item = ModelListStandardItem(name, True)
-            index.appendRow(item)
+            parent.appendRow(item)
 
         self.rewrite_config()
 
@@ -394,7 +411,23 @@ class ModelListTreeView(QTreeView):
         self.rewrite_config()
 
     def duplicate_model_event(self):
-        pass
+        """
+        复制当前模型
+        """
+        index = self.currentIndex()
+        item = self.model().itemFromIndex(index)
+        new_name = self.generate_new_name(item.get_full_name()[:-1], item.text())
+        new_path = self.proj.duplicate_model(item.get_full_name(), new_name)
+        new_item = ModelListStandardItem(new_name, False, new_path)
+
+        # 在当前模型后插入
+        if item.parent() is not None:
+            item.parent().insertRow(index.row() + 1, new_item)
+        else:
+            self.model().insertRow(index.row() + 1, new_item)
+
+        self.rewrite_config()
+
 
     def rename_event(self):
         """

@@ -186,6 +186,7 @@ class ProjIO:
         with open(model_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False)
 
+
     @staticmethod
     def get_model_path_by_full_name(full_model_name: []):
         """
