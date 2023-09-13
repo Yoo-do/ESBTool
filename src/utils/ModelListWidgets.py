@@ -139,7 +139,7 @@ class ModelListTreeView(QTreeView):
         self.setModel(model)
 
         if expanded_dirs is not None:
-            self.expend_dirs(expanded_dirs)
+            self.expend_dirs(expanded_dirs, model)
 
     def generate_model(self, parent, data: list):
         """
@@ -181,7 +181,7 @@ class ModelListTreeView(QTreeView):
 
         return expanded_dirs
 
-    def expend_dirs(self, expanded_dirs: list, parent_index: QModelIndex = None):
+    def expend_dirs(self, expanded_dirs: list, parent: ModelListStandardModel | ModelListStandardItem):
         """
         按传进来的文件夹递归展开 expanded_dirs : [{"name":, "items"[{}]}]
         """
@@ -189,19 +189,17 @@ class ModelListTreeView(QTreeView):
             return
 
         dir_names = [dir.get('name') for dir in expanded_dirs]
-        if parent_index is None:
-            parent_index = self.model()
-
-        parent = self.model().itemFromIndex(parent_index)
 
         for row in range(parent.rowCount()):
-            item = parent.child(row)
-            index = item.index()
+            if isinstance(parent, ModelListStandardModel):
+                item = parent.item(row)
+            else:
+                item = parent.child(row)
             if item.is_dir and item.text() in dir_names:
                 # 展开对应文件夹
-                self.expand(index)
+                self.expand(item.index())
                 print(f'expand {item.text()}')
-                self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0], index)
+                self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0], item)
 
 
     def right_clicked_menu(self, pos):
