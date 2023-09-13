@@ -201,7 +201,6 @@ class ModelListTreeView(QTreeView):
                 print(f'expand {item.text()}')
                 self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0], item)
 
-
     def right_clicked_menu(self, pos):
         """
         右击菜单栏
@@ -273,33 +272,72 @@ class ModelListTreeView(QTreeView):
         if drop_position == QAbstractItemView.OnItem:
             if target_item.is_dir is False:
                 # 不允许放在model节点内
+                QMessageBox.critical(self.parent(), '错误提示', f'不允许放置在模型结点内')
                 event.ignore()
                 return
             else:
                 if target_item is not None:
-                    target_item.appendRow(source_item.clone())
+                    new_item = source_item.clone()
+
+                    if self.is_name_exists(target_item.get_full_name(), new_item.text()):
+                        QMessageBox.critical(self.parent(), '错误提示', f'相同的名称"{new_item.text()}"')
+                        event.ignore()
+                        return
+
+                    target_item.appendRow(new_item)
                 else:
-                    self.model().appendRow(source_item.clone())
+                    new_item = source_item.clone()
+                    if self.is_name_exists([], new_item.text()):
+                        QMessageBox.critical(self.parent(), '错误提示', f'相同的名称"{new_item.text()}"')
+                        event.ignore()
+                        return
+                    self.model().appendRow()
 
         elif drop_position == QAbstractItemView.AboveItem:
             """拖拽到上方时"""
             parent = target_item.parent()
             if parent is None:
                 parent = self.model()
+                full_name_path = []
+            else:
+                full_name_path = parent.get_full_name()
 
-            parent.insertRow(target_index.row(), source_item.clone())
+            new_item = source_item.clone()
+            # 目标路径有相同名称的话跳出提示框
+            if self.is_name_exists(full_name_path, new_item.text()):
+                QMessageBox.critical(self.parent(), '错误提示', f'相同的名称"{new_item.text()}"')
+                event.ignore()
+                return
+
+            parent.insertRow(target_index.row(), new_item)
 
         elif drop_position == QAbstractItemView.BelowItem:
             """拖拽到下方时"""
             parent = target_item.parent()
             if parent is None:
                 parent = self.model()
+                full_name_path = []
+            else:
+                full_name_path = parent.get_full_name()
 
-            parent.insertRow(target_index.row() + 1, source_item.clone())
+            new_item = source_item.clone()
+            # 目标路径有相同名称的话跳出提示框
+            if self.is_name_exists(full_name_path, new_item.text()):
+                QMessageBox.critical(self.parent(), '错误提示', f'相同的名称"{new_item.text()}"')
+                event.ignore()
+                return
+
+            parent.insertRow(target_index.row() + 1, new_item)
 
         elif drop_position == QAbstractItemView.OnViewport:
             """拖拽到空白处"""
-            self.model().insertRow(self.model().rowCount(), source_item.clone())
+            new_item = source_item.clone()
+            if self.is_name_exists([], new_item.text()):
+                QMessageBox.critical(self.parent(), '错误提示', f'相同的名称"{new_item.text()}"')
+                event.ignore()
+                return
+
+            self.model().insertRow(self.model().rowCount(), new_item)
 
         # 移除原结点
         if source_item.parent() is not None:
@@ -388,10 +426,29 @@ class ModelListTreeView(QTreeView):
         self.rewrite_config()
 
     def add_premodel_event(self):
-        pass
+        """
+        在前面插入一个模型
+        """
+
+        index = self.currentIndex()
+        parent = self.model().itemFromIndex(index).parent()
+
+        if parent is None:
+            parent = self.model()
+            full_name_path = []
+        else:
+            full_name_path = parent.get_full_name()
+        name = self.generate_new_name(full_name_path)
+        item = ModelListStandardItem(name, False, '')
+        parent.insertRow(index.row(), item)
+
+        self.proj.add_model(item.get_full_name())
+        self.rewrite_config()
 
     def add_postmodel_event(self):
-        pass
+        """
+        在后面插入一个模型
+        """
 
     def delete_model_event(self):
         """
@@ -425,7 +482,6 @@ class ModelListTreeView(QTreeView):
             self.model().insertRow(index.row() + 1, new_item)
 
         self.rewrite_config()
-
 
     def rename_event(self):
         """
