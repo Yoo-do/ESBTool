@@ -161,28 +161,27 @@ class ModelListTreeView(QTreeView):
         """
 
         self.model().rewrite_config()
-        self.fresh_data(self.get_expanded_dirs())
+        expanded_dirs = []
+        for row in range(self.model().rowCount()):
+            expanded_dirs += self.get_expanded_dirs(self.model().index(row, 0))
+        print(expanded_dirs)
+        self.fresh_data(expanded_dirs)
 
-    def get_expanded_dirs(self):
-        def traverse(parent: QModelIndex, dirs):
-            # 检查节点是否展开
-            if self.isExpanded(parent):
-                items = []
-                # 遍历子节点
-                item = self.model().itemFromIndex(parent)
-                for row in range(item.rowCount()):
-                    traverse(item.child(row).index(), items)
-                dirs.append({"name": self.model().itemFromIndex(parent).text(), "items": items})
-
+    def get_expanded_dirs(self, parent_index: QModelIndex):
         expanded_dirs = []
 
+        # 检查节点是否展开
+        if self.isExpanded(parent_index):
+            items = []
+            # 遍历子节点
+            item = self.model().itemFromIndex(parent_index)
+            for row in range(item.rowCount()):
+                items += self.get_expanded_dirs(item.child(row).index())
+            expanded_dirs.append({"name": self.model().itemFromIndex(parent_index).text(), "items": items})
 
-        traverse(self.model().index(0, 0), expanded_dirs)
-
-        print(expanded_dirs)
         return expanded_dirs
 
-    def expend_dirs(self, expanded_dirs: list, parent_index: QModelIndex=None):
+    def expend_dirs(self, expanded_dirs: list, parent_index: QModelIndex = None):
         """
         按传进来的文件夹递归展开 expanded_dirs : [{"name":, "items"[{}]}]
         """
@@ -191,17 +190,18 @@ class ModelListTreeView(QTreeView):
 
         dir_names = [dir.get('name') for dir in expanded_dirs]
         if parent_index is None:
-            print(expanded_dirs)
             parent_index = self.model()
 
-        for row in range(parent_index.rowCount()):
-            index = parent_index.index(row, 0)
-            item = parent_index.itemFromIndex(index)
+        parent = self.model().itemFromIndex(parent_index)
+
+        for row in range(parent.rowCount()):
+            item = parent.child(row)
+            index = item.index()
             if item.is_dir and item.text() in dir_names:
                 # 展开对应文件夹
                 self.expand(index)
-                print(f'expand{item.text()}')
-                self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0])
+                print(f'expand {item.text()}')
+                self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0], index)
 
 
     def right_clicked_menu(self, pos):
