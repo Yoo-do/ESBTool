@@ -1,10 +1,8 @@
-from PyQt5.QtCore import QModelIndex
-from PyQt5.QtWidgets import QWidget, QMainWindow, QStackedWidget, QBoxLayout, QLabel, QListWidget, QPushButton, \
-    QTreeWidget, QTreeWidgetItem, QDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QStackedWidget, QBoxLayout, QLabel, QPushButton, \
+    QDialog
 from enum import Enum
-from src.utils import Data, DiyWidgets, Log, ModelListWidgets
-
+from src.utils import Data
+from src.widgets import ModelListWidgets, CommonWidgets, ModelDetailWidgets
 
 
 class SubWindowType(Enum):
@@ -89,12 +87,12 @@ class ModelWindow(QWidget):
         model_detail_button_layout.addWidget(self.model_save_button)
 
         # 模型节点展示
-        self.model_detial_tree = DiyWidgets.ModelTreeView(self)
+        self.model_detial_tree = ModelDetailWidgets.ModelTreeView(self)
 
         model_detail_layout.addWidget(self.model_detial_tree)
 
         # 结构模型
-        self.tree_standard_model: DiyWidgets.ModelStandardModel = None
+        self.tree_standard_model: ModelDetailWidgets.ModelStandardModel = None
 
     def fresh_data(self):
         """
@@ -131,7 +129,7 @@ class ModelWindow(QWidget):
                 self.tree_standard_model.clear()
             return
 
-        self.tree_standard_model = DiyWidgets.ModelStandardModel()
+        self.tree_standard_model = ModelDetailWidgets.ModelStandardModel()
         self.model_detial_tree.setModel(self.tree_standard_model)
         self.model_detial_tree.header().resizeSection(0, 300)
 
@@ -141,7 +139,7 @@ class ModelWindow(QWidget):
         try:
 
             # 生成节点
-            root = DiyWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'),
+            root = ModelDetailWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'),
                                                 data.get('require'),
                                                 data.get('tittle'), data.get('description'))
 
@@ -206,7 +204,7 @@ class ModelWindow(QWidget):
             index = self.model_list_tree.currentIndex()
             item = self.model_list_tree.model().itemFromIndex(index)
 
-            dialog = DiyWidgets.ModelImportDialog(self)
+            dialog = ModelDetailWidgets.ModelImportDialog(self)
             if dialog.exec_() == QDialog.Accepted:
                 curr_model: Data.Model = self.main_window.curr_proj.get_model(item.get_full_name())
                 data = dialog.data
@@ -224,7 +222,7 @@ class ModelWindow(QWidget):
         item = self.model_list_tree.model().itemFromIndex(index)
         curr_model: Data.Model = self.main_window.curr_proj.get_model(item.get_full_name())
 
-        dialog = DiyWidgets.ModelVerifyDialog(curr_model)
+        dialog = ModelDetailWidgets.ModelVerifyDialog(curr_model)
         dialog.exec_()
 
 class ApiWindow(QWidget):

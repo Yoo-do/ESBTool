@@ -1,3 +1,7 @@
+"""
+模型列表窗体
+"""
+
 from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView, QDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex
@@ -58,7 +62,6 @@ class ModelListStandardModel(QStandardItemModel):
         """
         回写modelConfig
         """
-
         config = self.generate_config(self)
         FileIO.ProjIO.rewrite_model_config(self.proj_name, config)
 

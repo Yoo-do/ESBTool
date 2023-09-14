@@ -1,3 +1,5 @@
-[2023-09-13 22:42:49,038] INFO: file: Interface.py line: 53 msg: 主界面初始化完成
-[2023-09-13 22:42:51,199] INFO: file: Interface.py line: 147 msg: 进入项目[检查系统]
-[2023-09-13 22:43:02,570] INFO: file: Data.py line: 146 msg: 项目 [检查系统] 删除了模型 [患者基本信息]
+[2023-09-14 17:46:02,241] INFO: file: Interface.py line: 54 msg: 主界面初始化完成
+[2023-09-14 17:46:04,877] INFO: file: Interface.py line: 148 msg: 打开项目[检查系统]
+[2023-09-14 17:46:08,926] WARNING: file: ModelDetailWidgets.py line: 335 msg: 不能拖拽到其他列
+[2023-09-14 17:46:11,656] WARNING: file: ModelDetailWidgets.py line: 335 msg: 不能拖拽到其他列
+[2023-09-14 17:46:22,850] INFO: file: Data.py line: 146 msg: 项目 [检查系统] 删除了模型 [new 1]

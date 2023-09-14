@@ -1,3 +1,6 @@
+"""
+模型细节树中的窗体和结构
+"""
 import json
 
 from PyQt5.QtWidgets import QDialog, QListWidget, QBoxLayout, QDialogButtonBox, \
@@ -8,30 +11,6 @@ from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal
 
 from src.utils import Data, Log
 
-
-class ProjListDialog(QDialog):
-    def __init__(self, parent, tittle, items):
-        """
-        项目弹窗列表
-        """
-
-        super().__init__(parent)
-
-        self.setWindowTitle(tittle)
-
-        layout = QBoxLayout(QBoxLayout.TopToBottom)
-
-        self.list_widget = QListWidget()
-        self.list_widget.addItems(items)
-        layout.addWidget(self.list_widget)
-
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self.accept)
-        self.list_widget.doubleClicked.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        self.setLayout(layout)
 
 class DataTypeCombox(QStyledItemDelegate):
     """
@@ -255,8 +234,8 @@ class ModelTreeView(QTreeView):
 
             # 按节点分配菜单按钮
             if parent is None:
-                # 根节点不支持任何操作
-                pass
+                # 根节点只能新增子节点
+                menu.addAction(add_child_action)
             elif parent.child(index.row(), 1).data(role=Qt.DisplayRole) == 'object':
 
                 # object 类型节点
@@ -352,17 +331,24 @@ class ModelTreeView(QTreeView):
             super().startDrag(supported_action)
 
     def dropEvent(self, event):
+        def error_msg(msg: str):
+            Log.logger.warning(msg)
+            QMessageBox.critical(self.parent(), '错误消息', msg)
+            event.ignore()
+            return
 
         drop_position = self.dropIndicatorPosition()
 
         target_index = self.indexAt(event.pos())
         target_parent = self.model().itemFromIndex(target_index).parent()
 
+        if target_index.column() != 0:
+            error_msg('不能拖拽到其他列')
+            return
+
         if target_parent is None:
             if drop_position in [QAbstractItemView.AboveItem, QAbstractItemView.BelowItem]:
-                Log.logger.warning('禁止拖拽到根节点外')
-                event.ignore()
-                return
+                error_msg('禁止拖拽到根节点外')
             elif drop_position == QAbstractItemView.OnItem:
                 super().dropEvent(event)
                 return
@@ -372,9 +358,9 @@ class ModelTreeView(QTreeView):
         # 放置节点的限制
         if drop_position == QAbstractItemView.OnItem and target_data_type not in ['object']:
             # 不允许放在非object节点内
-            Log.logger.warning(f'不允许放置在 {target_data_type} 节点内')
-            event.ignore()
+            error_msg(f'不允许放置在 {target_data_type} 节点内')
             return
+
         elif drop_position in [QAbstractItemView.AboveItem, QAbstractItemView.BelowItem]:
             # 拖拽到上下侧时 禁止直接拖到数组的节点里，必须拖拽到items里面
 
@@ -385,9 +371,7 @@ class ModelTreeView(QTreeView):
                 target_parent_parent_data_type = target_parent_parent.child(target_parent_index.row(), 1).data(
                     role=Qt.DisplayRole)
                 if target_parent_parent_data_type == 'array':
-                    Log.logger.warning(f'不允许直接放置节点到 array 节点里，必须放置到items里')
-
-                    event.ignore()
+                    error_msg(f'不允许直接放置节点到 array 节点里，必须放置到items里')
                     return
 
         super().dropEvent(event)
@@ -425,10 +409,10 @@ class ModelTreeView(QTreeView):
         新增子结点
         """
         index = self.currentIndex()
-        curr_item = self.model().itemFromIndex(index).parent().child(index.row(), 0)
+        item = self.model().itemFromIndex(index)
         if index.isValid():
             # 执行新增节点的操作
-            ModelStandardItem(self, curr_item, '新结点', 'string', True)
+            ModelStandardItem(self, item, '新结点', 'string', True)
 
     def add_pre_node_event(self):
         """

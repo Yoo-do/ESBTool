@@ -8,8 +8,9 @@ from PyQt5.Qt import QIcon, QPixmap
 import sys
 import path_lead
 
-from src.utils import FileIO, Data, DiyWidgets, Log
+from src.utils import FileIO, Data, Log
 from src.subwindows import SubWindow
+from src.widgets import CommonWidgets
 
 
 class Interface(QMainWindow):
@@ -134,7 +135,7 @@ class Interface(QMainWindow):
 
     def open_proj_event(self):
         proj_names = FileIO.ProjIO.get_proj_names()
-        dialog = DiyWidgets.ProjListDialog(self, '选择项目', proj_names)
+        dialog = CommonWidgets.ProjListDialog(self, '选择项目', proj_names)
         if dialog.exec_() == QDialog.Accepted:
             selected_proj = [item.text() for item in dialog.list_widget.selectedItems()][0]
             self.set_current_proj(selected_proj)
@@ -144,7 +145,7 @@ class Interface(QMainWindow):
             self.show_index_window()
 
             # 日志
-            Log.logger.info(f'进入项目[{selected_proj}]')
+            Log.logger.info(f'打开项目[{selected_proj}]')
 
     def add_proj_event(self):
         """
