@@ -79,14 +79,14 @@ class Model:
         """
 
         self.model = data
-        FileIO.ProjIO.rewrite_model(self.proj_name, self.model_path, self.model)
+        FileIO.ModelIO.rewrite_model(self.proj_name, self.model_path, self.model)
 
     def delete(self):
         """
         删除model文件
         :return:
         """
-        FileIO.ProjIO.delete_model(self.proj_name, self.model_path)
+        FileIO.ModelIO.delete_model(self.proj_name, self.model_path)
 
 
 class Api:
@@ -101,11 +101,12 @@ class Api:
 class Proj:
     def __init__(self, proj_name):
         self.proj_name = proj_name
-        self.model_config = {}
-        self.apis = []
 
-        self.fresh_apis()
+        self.model_config = {}
+        self.api_config = {}
+
         self.fresh_model_config()
+        self.fresh_api_config()
 
     def get_model(self, full_model_name: list):
         """
@@ -125,7 +126,7 @@ class Proj:
             path = [x for x in items if x.get('name') == chain_path][0]
 
         model_path = path.get('path')
-        model = Model(self.proj_name, model_name, model_path, FileIO.ProjIO.get_model_data(self.proj_name, model_path))
+        model = Model(self.proj_name, model_name, model_path, FileIO.ModelIO.get_model_data(self.proj_name, model_path))
         return model
 
     def fresh_model_config(self):
@@ -133,7 +134,7 @@ class Proj:
         获取模型配置
         :return:
         """
-        self.model_config = FileIO.ProjIO.get_model_config(self.proj_name)
+        self.model_config = FileIO.ModelIO.get_model_config(self.proj_name)
 
     def delete_model(self, full_model_name):
         """
@@ -153,8 +154,8 @@ class Proj:
         :param full_model_name: 当前模型的全逻辑路径
         :return:
         """
-        model_path = FileIO.ProjIO.get_model_path_by_full_name(full_model_name)
-        FileIO.ProjIO.add_model(self.proj_name, model_path)
+        model_path = FileIO.ModelIO.get_model_path_by_full_name(full_model_name)
+        FileIO.ModelIO.add_model(self.proj_name, model_path)
         Log.logger.info(f'项目 [{self.proj_name}] 新增了模型 [{full_model_name[-1]}] ')
         self.fresh_model_config()
 
@@ -165,10 +166,10 @@ class Proj:
         data = self.get_model(full_mode_name).model
         source_model_name = full_mode_name[-1]
         full_mode_name[-1] = new_model_name
-        model_path = FileIO.ProjIO.get_model_path_by_full_name(full_mode_name)
+        model_path = FileIO.ModelIO.get_model_path_by_full_name(full_mode_name)
 
-        FileIO.ProjIO.add_model(self.proj_name, model_path)
-        FileIO.ProjIO.rewrite_model(self.proj_name, model_path, data)
+        FileIO.ModelIO.add_model(self.proj_name, model_path)
+        FileIO.ModelIO.rewrite_model(self.proj_name, model_path, data)
 
         Log.logger.info(f'复制模型 [{source_model_name}] 生成 [{new_model_name}]')
 
@@ -177,11 +178,11 @@ class Proj:
 
 
 
-    def fresh_apis(self):
+    def fresh_api_config(self):
         """
-        获取全部接口信息
+        获取接口配置信息
         """
-        pass
+        self.api_config = FileIO.ApiIO.get_api_config(self.proj_name)
 
     def export_file(self):
         pass

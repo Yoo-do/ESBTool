@@ -42,7 +42,7 @@ class SubWindow:
 
         self.stack_widget.addWidget(ModelWindow.ModelWindow(main_window))
 
-        self.stack_widget.addWidget(ApiWindow(main_window))
+        self.stack_widget.addWidget(ApiWindow.ApiWindow(main_window))
 
     def switch_to_window(self, target_window_type: SubWindowType):
         self.stack_widget.setCurrentIndex(target_window_type.value[0])

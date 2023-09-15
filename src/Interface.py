@@ -159,6 +159,13 @@ class Interface(QMainWindow):
                 # 日志
                 Log.logger.info(f'新增项目[{proj_name}]')
 
+
+                # 打开该项目
+                self.set_current_proj(proj_name)
+                self.sub_window_object.fresh_all_data()
+                self.show_index_window()
+
+
         except Exception as e:
             QMessageBox.critical(self, '错误消息', e.__str__(), QMessageBox.Ok)
 
