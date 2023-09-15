@@ -37,7 +37,7 @@ class ProjIO:
     @staticmethod
     def add_proj(proj_name):
         """
-        创建新项目，默认再创建models、apis文件夹
+        创建新项目，默认再创建models、apis文件夹, modelConfig、apiConfig文件
         :param proj_name:
         :return:
         """
@@ -50,6 +50,13 @@ class ProjIO:
             os.mkdir(os.path.join(proj_path, 'apis'))
             os.mkdir(os.path.join(proj_path, 'models'))
 
+            with open(os.path.join(proj_path, 'modelConfig.json'), 'w', encoding='utf-8') as model_config:
+                json.dump([], model_config, ensure_ascii=False)
+
+            with open(os.path.join(proj_path, 'apiConfig.json'), 'w', encoding='utf-8') as api_config:
+                json.dump([], api_config, ensure_ascii=False)
+
+
     @staticmethod
     def get_proj_names():
         """
@@ -57,26 +64,6 @@ class ProjIO:
         """
         ProjIO.generate_proj_dir()
         return os.listdir(ProjIO.PROJ_DIR)
-
-    @staticmethod
-    def get_models(proj_name) -> [{}]:
-        """
-        获取项目下全部model,返回models的json数据[{"model_name": xx, "model": {}}]
-        """
-        models = []
-
-        proj_path = ProjIO.get_proj_path(proj_name)
-        models_path = os.path.join(proj_path, 'models')
-        if not os.path.exists(models_path):
-            os.mkdir('models')
-            return models
-
-        for model in os.listdir(models_path):
-            f = open(os.path.join(models_path, model), 'r', encoding='utf-8')
-            data = json.load(f)
-            models.append({'model_name': model.split('.')[0], 'model': data})
-
-        return models
 
     @staticmethod
     def get_model_data(proj_name, model_path):
