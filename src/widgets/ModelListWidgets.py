@@ -452,6 +452,20 @@ class ModelListTreeView(QTreeView):
         """
         在后面插入一个模型
         """
+        index = self.currentIndex()
+        parent = self.model().itemFromIndex(index).parent()
+
+        if parent is None:
+            parent = self.model()
+            full_name_path = []
+        else:
+            full_name_path = parent.get_full_name()
+        name = self.generate_new_name(full_name_path)
+        item = ModelListStandardItem(name, False, '')
+        parent.insertRow(index.row() + 1, item)
+
+        self.proj.add_model(item.get_full_name())
+        self.rewrite_config()
 
     def delete_model_event(self):
         """

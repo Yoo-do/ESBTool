@@ -94,8 +94,37 @@ class Api:
     接口对应数据类
     """
 
-    def __init__(self, api_name: str):
+    def __init__(self, proj_name: str, api_name: str, api_path: str, data: dict):
+        self.proj_name = proj_name
+        self.api_name = api_name
+        self.api_path = api_path
+        self.data = data
+
+    def load_data(self):
+        """
+        解析data
+        请求的url
+        详细说明
+        请求的模型名称及地址
+        响应的模型名称及地址
+        是否在用
+        """
         pass
+
+    def save(self, data: dict):
+        """
+        重写api的值，并保存文件
+        """
+
+        self.data = data
+        FileIO.ApiIO.rewrite_api(self.proj_name, self.api_path, self.data)
+
+    def delete(self):
+        """
+        删除api文件
+        :return:
+        """
+        FileIO.ApiIO.delete_api(self.proj_name, self.api_path)
 
 
 class Proj:
@@ -147,7 +176,6 @@ class Proj:
         Log.logger.info(f'项目 [{self.proj_name}] 删除了模型 [{full_model_name[-1]}]')
         self.fresh_model_config()
 
-
     def add_model(self, full_model_name):
         """
         项目中新增模型
@@ -175,14 +203,71 @@ class Proj:
 
         return model_path
 
+    def get_api(self, full_api_name: list):
+        """
+        根据名称获取对应的api对象
+        :param full_api_name: model的全路径 list
+        :return:
+        """
+        path = ''
+        api_name = full_api_name[-1]
 
+        for index, chain_path in enumerate(full_api_name):
+            if index == 0:
+                items = self.model_config
+            else:
+                items = path.get('items')
 
+            path = [x for x in items if x.get('name') == chain_path][0]
+
+        api_path = path.get('path')
+        api = Api(self.proj_name, api_name, api_path, FileIO.ApiIO.get_api_data(self.proj_name, api_path))
+        return api
 
     def fresh_api_config(self):
         """
         获取接口配置信息
         """
         self.api_config = FileIO.ApiIO.get_api_config(self.proj_name)
+
+    def delete_api(self, full_api_name):
+        """
+        删除项目中的接口
+        :param full_api_name:
+        :return:
+        """
+        target_api = self.get_api(full_api_name)
+        target_api.delete()
+        Log.logger.info(f'项目 [{self.proj_name}] 删除了接口 [{full_api_name[-1]}]')
+        self.fresh_api_config()
+
+
+    def add_api(self, full_api_name):
+        """
+        项目中新增模型
+        :param full_api_name: 当前接口的全逻辑路径
+        :return:
+        """
+        api_path = FileIO.ApiIO.get_api_path_by_full_name(full_api_name)
+        FileIO.ApiIO.add_api(self.proj_name, api_path)
+        Log.logger.info(f'项目 [{self.proj_name}] 新增了接口 [{full_api_name[-1]}] ')
+        self.fresh_model_config()
+
+    def duplicate_api(self, full_api_name, new_api_name):
+        """
+        复制新的模型， 并返回实际路径
+        """
+        data = self.get_model(full_api_name).model
+        source_api_name = full_api_name[-1]
+        full_api_name[-1] = new_api_name
+        api_path = FileIO.ApiIO.get_api_path_by_full_name(full_api_name)
+
+        FileIO.ApiIO.add_api(self.proj_name, api_path)
+        FileIO.ApiIO.rewrite_api(self.proj_name, api_path, data)
+
+        Log.logger.info(f'复制接口 [{source_api_name}] 生成 [{new_api_name}]')
+
+        return api_path
 
     def export_file(self):
         pass

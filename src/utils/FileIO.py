@@ -237,7 +237,7 @@ class ApiIO:
         api_file_path = os.path.join(models_path, api_path + '.json')
 
         # 不论原来是否存在，直接重写
-        data = {"type": "object", "properties": {}, "required": []}
+        data = {"url": None, "description": None, "request_name": None, "request_path": None, "response_name": None, 'response_path': None, "valid": True}
         with open(api_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False)
 

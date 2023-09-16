@@ -85,6 +85,10 @@ class Interface(QMainWindow):
         self.menubar.addAction(self.model_action)
         self.model_action.triggered.connect(self.show_model_window)
 
+        self.api_action = QAction('接口')
+        self.menubar.addAction(self.api_action)
+        self.api_action.triggered.connect(self.show_api_window)
+
         self.test_action = QAction('测试')
         self.menubar.addAction(self.test_action)
         self.test_action.triggered.connect(self.test_event)
@@ -115,6 +119,7 @@ class Interface(QMainWindow):
         控制按钮是否可用
         """
         self.model_action.setEnabled(a0)
+        self.api_action.setEnabled(a0)
 
     def show_status_info(self, info: str):
         """
