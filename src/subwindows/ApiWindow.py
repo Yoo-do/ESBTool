@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QBoxLayout, QLabel, QPushButton, QDialog, Q
 from PyQt5.QtCore import Qt
 
 from src.widgets import ApiListWidgets
+from src.utils import Log
 
 
 class ApiWindow(QWidget):
@@ -146,6 +147,9 @@ class ApiWindow(QWidget):
         self.tab_edit_request_combox.addItems([item.get('name') for item in self.request_models])
         self.tab_edit_request_combox.setCurrentText(request_name)
 
+        # 绑定修改事件
+        self.tab_edit_request_combox.currentIndexChanged.connect(self.request_combox_changed)
+
         # 响应模型
         response_name = self.curr_api.get_response_name()
         response_path = self.curr_api.get_response_name()
@@ -156,6 +160,8 @@ class ApiWindow(QWidget):
         self.tab_edit_response_combox.addItems([item.get('name') for item in self.response_models])
         self.tab_edit_response_combox.setCurrentText(response_name)
 
+        # 绑定修改事件
+        self.tab_edit_response_combox.currentIndexChanged.connect(self.response_combox_changed)
 
 
     def preview_tab_clear_data(self):
@@ -179,6 +185,7 @@ class ApiWindow(QWidget):
         """
         pass
 
+    # 响应事件
     def api_selected_event(self):
         index = self.api_list_tree.currentIndex()
         item = self.api_list_tree.model().itemFromIndex(index)
@@ -194,3 +201,31 @@ class ApiWindow(QWidget):
         self.tab_widget.setEnabled(True)
         self.edit_tab_fresh_data()
         self.preview_tab_fresh_data()
+
+    def request_combox_changed(self):
+        """
+        请求模型修改
+        :return:
+        """
+        index = self.tab_edit_request_combox.currentIndex()
+        request_name = self.request_models[index].get('name')
+        request_path = self.request_models[index].get('path')
+
+        self.curr_api.set_request_name(request_name)
+        self.curr_api.set_request_path(request_path)
+
+        Log.logger.info(f'请求模型修改为 [{request_name}]')
+
+    def response_combox_changed(self):
+        """
+        响应模型修改
+        :return:
+        """
+        index = self.tab_edit_response_combox.currentIndex()
+        response_name = self.response_models[index].get('name')
+        response_path = self.response_models[index].get('path')
+
+        self.curr_api.set_response_name(response_name)
+        self.curr_api.set_response_path(response_path)
+
+        Log.logger.info(f'响应模型修改为 [{response_name}]')
