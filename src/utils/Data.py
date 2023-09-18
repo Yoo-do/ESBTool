@@ -111,13 +111,62 @@ class Api:
         """
         pass
 
-    def save(self, data: dict):
+    def save(self, data: dict = None):
         """
         重写api的值，并保存文件
         """
-
-        self.data = data
+        if data is not None:
+            self.data = data
         FileIO.ApiIO.rewrite_api(self.proj_name, self.api_path, self.data)
+
+    def get_url(self):
+        return self.data.get('url')
+
+    def set_url(self, url: str):
+        self.data.update({"url": url})
+        self.save()
+
+    def get_description(self):
+        return self.data.get('description')
+
+    def set_description(self, description: str):
+        self.data.update({"description": description})
+        self.save()
+
+    def get_request_name(self):
+        return self.data.get('request_name')
+
+    def set_request_name(self, request_name: str):
+        self.data.update({"request_name": request_name})
+        self.save()
+
+    def get_request_path(self):
+        return self.data.get('request_path')
+
+    def set_request_path(self, request_path: str):
+        self.data.update({"request_path": request_path})
+        self.save()
+
+    def get_response_name(self):
+        return self.data.get('response_name')
+
+    def set_response_name(self, response_name: str):
+        self.data.update({"response_name": response_name})
+        self.save()
+
+    def get_response_path(self):
+        return self.data.get('response_path')
+
+    def set_response_path(self, response_path: str):
+        self.data.update({"response_path": response_path})
+        self.save()
+
+    def get_valid(self):
+        return self.data.get('valid')
+
+    def set_valid(self, valid: bool):
+        self.data.update({"valid": valid})
+        self.save()
 
     def delete(self):
         """
@@ -165,6 +214,23 @@ class Proj:
         """
         self.model_config = FileIO.ModelIO.get_model_config(self.proj_name)
 
+    def get_all_model_name_path(self, pre: str = '', data: dict = None):
+        """
+        获取每个模型的名称及路径，在接口窗口使用，模型路径用/分隔
+        :return:
+        """
+        models = []
+        if data is None:
+            data = self.model_config
+
+        for item in data:
+            if item.get('is_dir') is False:
+                models.append({'name': pre + item.get('name'), 'path': item.get('path')})
+            else:
+                models += self.get_all_model_name_path(pre + item.get('name') + '/', item.get('items'))
+
+        return models
+
     def delete_model(self, full_model_name):
         """
         删除项目中的模型
@@ -206,7 +272,7 @@ class Proj:
     def get_api(self, full_api_name: list):
         """
         根据名称获取对应的api对象
-        :param full_api_name: model的全路径 list
+        :param full_api_name: api的全路径 list
         :return:
         """
         path = ''
@@ -214,10 +280,9 @@ class Proj:
 
         for index, chain_path in enumerate(full_api_name):
             if index == 0:
-                items = self.model_config
+                items = self.api_config
             else:
                 items = path.get('items')
-
             path = [x for x in items if x.get('name') == chain_path][0]
 
         api_path = path.get('path')
@@ -240,7 +305,6 @@ class Proj:
         target_api.delete()
         Log.logger.info(f'项目 [{self.proj_name}] 删除了接口 [{full_api_name[-1]}]')
         self.fresh_api_config()
-
 
     def add_api(self, full_api_name):
         """
@@ -271,11 +335,3 @@ class Proj:
 
     def export_file(self):
         pass
-
-
-if __name__ == '__main__':
-    pass
-    # proj = Proj('检查系统')
-    # for model in proj.models:
-    #     print(model.model_name)
-    #     print(model.model)
