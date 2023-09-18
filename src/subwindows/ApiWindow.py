@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QBoxLayout, QLabel, QPushButton, QDialog, QTabWidget, QComboBox, QTextEdit, QLineEdit
+from PyQt5.QtWidgets import QWidget, QBoxLayout, QLabel, QPushButton, QDialog, QTabWidget, QComboBox, QTextEdit, \
+    QLineEdit, QTableView
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 from src.widgets import ApiListWidgets
 from src.utils import Log
@@ -14,6 +16,10 @@ class ApiWindow(QWidget):
         super().__init__(main_window)
         self.main_window = main_window
 
+        self.request_table_model = None
+        self.response_table_model = None
+
+        self.is_connect = False
         self.ui_init()
         self.fresh_data()
 
@@ -51,9 +57,11 @@ class ApiWindow(QWidget):
         self.tab_edit_description_tittle = QLabel('描述信息', self.tab_edit)
         self.tab_edit_description_textedit = QTextEdit(self.tab_edit)
         self.tab_edit_description_textedit.adjustSize()
-        self.tab_edit_valid_tittle = QLabel('是否废弃', self.tab_edit)
+        self.tab_edit_valid_tittle = QLabel('是否在用', self.tab_edit)
         self.tab_edit_valid_combox = QComboBox(self.tab_edit)
 
+
+        # 布局
         tab_edit_layout.addWidget(self.tab_edit_url_tittle)
         tab_edit_layout.addWidget(self.tab_edit_url_editline)
         tab_edit_layout.addWidget(self.tab_edit_request_tittle)
@@ -65,8 +73,6 @@ class ApiWindow(QWidget):
         tab_edit_layout.addWidget(self.tab_edit_valid_tittle)
         tab_edit_layout.addWidget(self.tab_edit_valid_combox)
 
-
-
         # “预览”选项卡
         self.tab_preview = QWidget()
         self.tab_widget.addTab(self.tab_preview, '预览')
@@ -75,31 +81,30 @@ class ApiWindow(QWidget):
         self.tab_preview.setLayout(tab_preview_layout)
 
         self.tab_preview_request_tittle = QLabel('请求模型', self.tab_preview)
-        self.tab_preview_request_model = QTabWidget(self.tab_preview)
+        self.tab_preview_request_model_table = QTableView(self.tab_preview)
         self.tab_preview_response_tittle = QLabel('响应模型', self.tab_preview)
-        self.tab_preview_response_model = QTabWidget(self.tab_preview)
+        self.tab_preview_response_model_table = QTableView(self.tab_preview)
 
-
+        # 窗体放入布局
         tab_preview_layout.addWidget(self.tab_preview_request_tittle)
-        tab_preview_layout.addWidget(self.tab_preview_request_model)
+        tab_preview_layout.addWidget(self.tab_preview_request_model_table)
         tab_preview_layout.addWidget(self.tab_preview_response_tittle)
-        tab_preview_layout.addWidget(self.tab_preview_response_model)
-
+        tab_preview_layout.addWidget(self.tab_preview_response_model_table)
 
         # 未选中时，禁用窗体
-        # self.tab_widget.setEnabled(False)
+        self.tab_widget.setEnabled(False)
 
     def disable_tab_widget(self):
         """
         选项卡数据清空并禁用
         :return:
         """
-        self.edit_tab_clear_data()
-        self.preview_tab_clear_data()
+        if self.tab_widget.isEnabled():
+            self.edit_tab_clear_data()
+            self.preview_tab_clear_data()
 
-        self.tab_widget.setCurrentIndex(0)
-        self.tab_widget.setEnabled(False)
-
+            self.tab_widget.setCurrentIndex(0)
+            self.tab_widget.setEnabled(False)
 
     def fresh_data(self):
         """
@@ -108,7 +113,6 @@ class ApiWindow(QWidget):
         if self.main_window.curr_proj is not None:
             self.api_list_tree.fresh_proj(self.main_window.curr_proj)
             self.api_list_tree.fresh_data()
-
 
         self.disable_tab_widget()
 
@@ -120,6 +124,16 @@ class ApiWindow(QWidget):
         if not self.tab_widget.isEnabled():
             return
 
+        # 解绑
+        if self.is_connect:
+            self.tab_edit_url_editline.textChanged.disconnect(self.url_changed)
+            self.tab_edit_request_combox.currentTextChanged.disconnect(self.request_combox_changed)
+            self.tab_edit_response_combox.currentTextChanged.disconnect(self.response_combox_changed)
+            self.tab_edit_description_textedit.textChanged.disconnect(self.description_changed)
+            self.tab_edit_valid_combox.currentTextChanged.disconnect(self.valid_changed)
+            self.is_connect = False
+
+        self.tab_edit_url_editline.clear()
         self.tab_edit_request_combox.clear()
         self.tab_edit_response_combox.clear()
         self.tab_edit_description_textedit.clear()
@@ -133,6 +147,8 @@ class ApiWindow(QWidget):
         if not self.tab_widget.isEnabled():
             return
 
+        self.edit_tab_clear_data()
+
         url = self.curr_api.get_url()
         self.tab_edit_url_editline.setText(url)
 
@@ -141,28 +157,42 @@ class ApiWindow(QWidget):
         request_name = self.curr_api.get_request_name()
         request_path = self.curr_api.get_request_name()
         self.request_models = self.main_window.curr_proj.get_all_model_name_path()
-        if {'name': request_name, 'path': request_path} not in self.request_models:
+        if request_name not in [item.get('name') for item in self.request_models]:
             self.request_models.append({'name': request_name, 'path': request_path})
 
         self.tab_edit_request_combox.addItems([item.get('name') for item in self.request_models])
         self.tab_edit_request_combox.setCurrentText(request_name)
 
-        # 绑定修改事件
-        self.tab_edit_request_combox.currentIndexChanged.connect(self.request_combox_changed)
-
         # 响应模型
         response_name = self.curr_api.get_response_name()
         response_path = self.curr_api.get_response_name()
         self.response_models = self.main_window.curr_proj.get_all_model_name_path()
-        if {'name': response_name, 'path': response_path} not in self.response_models:
+        if response_name not in [item.get('name') for item in self.response_models]:
             self.response_models.append({'name': response_name, 'path': response_path})
 
         self.tab_edit_response_combox.addItems([item.get('name') for item in self.response_models])
         self.tab_edit_response_combox.setCurrentText(response_name)
 
-        # 绑定修改事件
-        self.tab_edit_response_combox.currentIndexChanged.connect(self.response_combox_changed)
+        # 描述
+        description = self.curr_api.get_description()
+        self.tab_edit_description_textedit.setText(description)
 
+        # 是否有效
+        valid = self.curr_api.get_valid()
+        self.tab_edit_valid_combox.addItems(['是', '否'])
+        if valid:
+            self.tab_edit_valid_combox.setCurrentIndex(0)
+        else:
+            self.tab_edit_valid_combox.setCurrentIndex(1)
+
+        # 绑定事件
+        if not self.is_connect:
+            self.tab_edit_url_editline.textChanged.connect(self.url_changed)
+            self.tab_edit_request_combox.currentTextChanged.connect(self.request_combox_changed)
+            self.tab_edit_response_combox.currentTextChanged.connect(self.response_combox_changed)
+            self.tab_edit_description_textedit.textChanged.connect(self.description_changed)
+            self.tab_edit_valid_combox.currentTextChanged.connect(self.valid_changed)
+            self.is_connect = True
 
     def preview_tab_clear_data(self):
         """
@@ -171,19 +201,38 @@ class ApiWindow(QWidget):
         """
         if not self.tab_widget.isEnabled():
             return
+        if self.request_table_model is not None:
+            self.request_table_model.clear()
 
-        self.tab_preview_request_model.clear()
-        self.tab_preview_response_model.clear()
-
-
-
+        if self.response_table_model is not None:
+            self.response_table_model.clear()
 
     def preview_tab_fresh_data(self):
         """
         预览选项卡数据刷新
         :return:
         """
-        pass
+
+        self.preview_tab_clear_data()
+
+        models = self.main_window.curr_proj.get_all_model_name_path()
+
+        # 分别获取请求响应的模型path
+        request_path = self.curr_api.get_request_path()
+        if request_path in [model.get('path') for model in models]:
+            request_data = self.main_window.curr_proj.get_model_data(request_path)
+
+            self.request_table_model = QStandardItemModel(self.tab_preview_request_model_table)
+            self.request_table_model.setHorizontalHeaderLabels(['节点', '类型', '必选', '中文名', '描述'])
+
+            self.tab_preview_request_model_table.setModel(self.request_table_model)
+
+
+
+
+
+
+
 
     # 响应事件
     def api_selected_event(self):
@@ -214,7 +263,7 @@ class ApiWindow(QWidget):
         self.curr_api.set_request_name(request_name)
         self.curr_api.set_request_path(request_path)
 
-        Log.logger.info(f'请求模型修改为 [{request_name}]')
+        Log.logger.info(f'接口 [{self.curr_api.api_name}] 的请求模型修改为 [{request_name}]')
 
     def response_combox_changed(self):
         """
@@ -228,4 +277,34 @@ class ApiWindow(QWidget):
         self.curr_api.set_response_name(response_name)
         self.curr_api.set_response_path(response_path)
 
-        Log.logger.info(f'响应模型修改为 [{response_name}]')
+        Log.logger.info(f'接口 [{self.curr_api.api_name}] 的响应模型修改为 [{response_name}]')
+
+    def description_changed(self):
+        """
+        描述修改
+        :return:
+        """
+        description = self.tab_edit_description_textedit.toPlainText()
+        self.curr_api.set_description(description)
+
+        Log.logger.info(f'接口 [{self.curr_api.api_name}] 的描述修改为 [{description}]')
+
+    def url_changed(self):
+        """
+        url修改
+        :return:
+        """
+        url = self.tab_edit_url_editline.text()
+        self.curr_api.set_url(url)
+
+        Log.logger.info(f'接口 [{self.curr_api.api_name}] 的url修改为 [{url}]')
+
+    def valid_changed(self):
+        """
+        valid修改
+        :return:
+        """
+        valid = True if self.tab_edit_valid_combox.currentText() == '是' else False
+        self.curr_api.set_valid(valid)
+
+        Log.logger.info(f'接口 [{self.curr_api.api_name}] 的valid修改为 [{valid}]')

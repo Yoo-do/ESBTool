@@ -207,6 +207,12 @@ class Proj:
         model = Model(self.proj_name, model_name, model_path, FileIO.ModelIO.get_model_data(self.proj_name, model_path))
         return model
 
+    def get_model_data(self, model_path: str):
+        """
+        获取模型数据
+        """
+        return FileIO.ModelIO.get_model_data(self.proj_name, model_path)
+
     def fresh_model_config(self):
         """
         获取模型配置
