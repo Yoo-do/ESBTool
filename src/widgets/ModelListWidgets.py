@@ -63,7 +63,7 @@ class ModelListStandardModel(QStandardItemModel):
         回写modelConfig
         """
         config = self.generate_config(self)
-        FileIO.ProjIO.rewrite_model_config(self.proj_name, config)
+        FileIO.ModelIO.rewrite_model_config(self.proj_name, config)
 
     def generate_config(self, parent):
         """
@@ -92,10 +92,10 @@ class ModelListStandardModel(QStandardItemModel):
                 dirs.append({"name": model_name, "is_dir": is_dir, "items": self.generate_config(item)})
             else:
                 # 对于修改了位置的文件进行处理 实际文件路径为逻辑路径经过md5处理
-                target_path = FileIO.ProjIO.get_model_path_by_full_name(full_model_name)
+                target_path = FileIO.ModelIO.get_model_path_by_full_name(full_model_name)
 
                 if path != target_path:
-                    FileIO.ProjIO.rename_model(self.proj_name, path, target_path)
+                    FileIO.ModelIO.rename_model(self.proj_name, path, target_path)
 
                 files.append({"name": model_name, "is_dir": is_dir, "path": target_path})
 

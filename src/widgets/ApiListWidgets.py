@@ -477,7 +477,7 @@ class ApiListTreeView(QTreeView):
         """
         index = self.currentIndex()
         item = self.model().itemFromIndex(index)
-        self.proj.delete_model(item.get_full_name())
+        self.proj.delete_api(item.get_full_name())
 
         if item.parent() is not None:
             item.parent().removeRow(index.row())

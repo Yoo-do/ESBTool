@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QBoxLayout, QLabel, QPushButton, QDialog, QTabWidget, QComboBox, QTextEdit, \
-    QLineEdit, QTableView
+    QLineEdit, QTableView, QAbstractItemView, QHeaderView
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -16,8 +16,8 @@ class ApiWindow(QWidget):
         super().__init__(main_window)
         self.main_window = main_window
 
-        self.request_table_model = None
-        self.response_table_model = None
+        self.request_table_model: QStandardItemModel = None
+        self.response_table_model: QStandardItemModel = None
 
         self.is_connect = False
         self.ui_init()
@@ -82,8 +82,12 @@ class ApiWindow(QWidget):
 
         self.tab_preview_request_tittle = QLabel('请求模型', self.tab_preview)
         self.tab_preview_request_model_table = QTableView(self.tab_preview)
+        self.tab_preview_request_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
         self.tab_preview_response_tittle = QLabel('响应模型', self.tab_preview)
         self.tab_preview_response_model_table = QTableView(self.tab_preview)
+        self.tab_preview_response_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
 
         # 窗体放入布局
         tab_preview_layout.addWidget(self.tab_preview_request_tittle)
@@ -226,6 +230,69 @@ class ApiWindow(QWidget):
             self.request_table_model.setHorizontalHeaderLabels(['节点', '类型', '必选', '中文名', '描述'])
 
             self.tab_preview_request_model_table.setModel(self.request_table_model)
+            self.generate_request_table(request_data.get('properties'))
+
+            # 自适应大小
+            self.tab_preview_request_model_table.resizeColumnsToContents()
+            self.tab_preview_request_model_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        response_path = self.curr_api.get_response_path()
+        if response_path in [model.get('path') for model in models]:
+            response_data = self.main_window.curr_proj.get_model_data(response_path)
+
+            self.response_table_model = QStandardItemModel(self.tab_preview_response_model_table)
+            self.response_table_model.setHorizontalHeaderLabels(['节点', '类型', '必选', '中文名', '描述'])
+
+            self.tab_preview_response_model_table.setModel(self.response_table_model)
+            self.generate_response_table(response_data.get('properties'))
+
+            # 自适应大小
+            self.tab_preview_response_model_table.resizeColumnsToContents()
+            self.tab_preview_response_model_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+
+    def generate_request_table(self, data: dict):
+        """
+        请求预览生成
+        """
+        if data is None:
+            return
+
+        for key, value in data.items():
+            name_item = QStandardItem(key)
+            type_item = QStandardItem(value.get('type'))
+            required_item = QStandardItem('是' if value.get('require') else '否')
+            tittle_item = QStandardItem(value.get('tittle'))
+            description_item = QStandardItem(value.get('description'))
+
+            self.request_table_model.appendRow([name_item, type_item, required_item, tittle_item, description_item])
+
+            data_type = value.get('type')
+            if data_type == 'object':
+                self.generate_request_table(value.get('properties'))
+            elif data_type == 'array':
+                self.generate_request_table(value.get('items').get('properties'))
+    def generate_response_table(self, data: dict):
+        """
+        响应预览生成
+        """
+        if data is None:
+            return
+
+        for key, value in data.items():
+            name_item = QStandardItem(key)
+            type_item = QStandardItem(value.get('type'))
+            required_item = QStandardItem('是' if value.get('require') else '否')
+            tittle_item = QStandardItem(value.get('tittle'))
+            description_item = QStandardItem(value.get('description'))
+
+            self.response_table_model.appendRow([name_item, type_item, required_item, tittle_item, description_item])
+
+            data_type = value.get('type')
+            if data_type == 'object':
+                self.generate_response_table(value.get('properties'))
+            elif data_type == 'array':
+                self.generate_response_table(value.get('items').get('properties'))
 
 
 
