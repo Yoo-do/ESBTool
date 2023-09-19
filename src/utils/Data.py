@@ -327,7 +327,7 @@ class Proj:
         """
         复制新的模型， 并返回实际路径
         """
-        data = self.get_model(full_api_name).model
+        data = self.get_api(full_api_name).data
         source_api_name = full_api_name[-1]
         full_api_name[-1] = new_api_name
         api_path = FileIO.ApiIO.get_api_path_by_full_name(full_api_name)

@@ -1,39 +1,39 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget
 
-class TabDemo(QMainWindow):
+# 自定义信号类
+class MySignal(QObject):
+    my_signal = pyqtSignal()  # 定义一个信号
+
+# 继承QTreeView的自定义类
+class MyTreeView(QTreeView):
+    def __init__(self):
+        super().__init__()
+        self.my_signal = MySignal()  # 实例化自定义信号类
+
+    def do_something(self):
+        # 执行某个方法
+        # ...
+
+        self.my_signal.my_signal.emit()  # 发出信号
+
+# 主窗体类
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("选项卡示例")
-        self.setGeometry(100, 100, 400, 300)
+        self.tree_view = MyTreeView()
+        self.setCentralWidget(self.tree_view)
 
-        # 创建一个选项卡控件
-        self.tab_widget = QTabWidget(self)
-        self.setCentralWidget(self.tab_widget)
+        self.tree_view.my_signal.my_signal.connect(self.special_method)  # 连接信号与槽
 
-        # 创建两个选项卡
-        self.tab1 = QWidget()
-        self.tab2 = QWidget()
+    def special_method(self):
+        # 执行特定方法
+        # ...
+        print("收到信号，执行特定方法")
 
-        # 将选项卡添加到选项卡控件中
-        self.tab_widget.addTab(self.tab1, "选项卡1")
-        self.tab_widget.addTab(self.tab2, "选项卡2")
-
-        # 在第一个选项卡中添加一些内容
-        layout1 = QVBoxLayout()
-        label1 = QLabel("这是选项卡1的内容", self.tab1)
-        layout1.addWidget(label1)
-        self.tab1.setLayout(layout1)
-
-        # 在第二个选项卡中添加一些内容
-        layout2 = QVBoxLayout()
-        label2 = QLabel("这是选项卡2的内容", self.tab2)
-        layout2.addWidget(label2)
-        self.tab2.setLayout(layout2)
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    demo = TabDemo()
-    demo.show()
-    sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec_()

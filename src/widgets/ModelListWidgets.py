@@ -4,10 +4,14 @@
 
 from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView, QDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex
+from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex, pyqtSignal
+from PyQt5.Qt import QObject
 
 from src.utils import FileIO, Log
 
+
+class ModelRewriteSignal(QObject):
+    rewrite_signal = pyqtSignal()
 
 class ModelListStandardItem(QStandardItem):
     def __init__(self, name: str, is_dir: bool, path: str = None):
@@ -108,6 +112,7 @@ class ModelListTreeView(QTreeView):
 
         self.proj = proj
         self.standard_model = None
+        self.rewrite_signal = ModelRewriteSignal()
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -167,8 +172,9 @@ class ModelListTreeView(QTreeView):
         expanded_dirs = []
         for row in range(self.model().rowCount()):
             expanded_dirs += self.get_expanded_dirs(self.model().index(row, 0))
-        print(expanded_dirs)
         self.fresh_data(expanded_dirs)
+
+        self.rewrite_signal.rewrite_signal.emit()
 
     def get_expanded_dirs(self, parent_index: QModelIndex):
         expanded_dirs = []
@@ -201,7 +207,6 @@ class ModelListTreeView(QTreeView):
             if item.is_dir and item.text() in dir_names:
                 # 展开对应文件夹
                 self.expand(item.index())
-                print(f'expand {item.text()}')
                 self.expend_dirs([dir.get('items') for dir in expanded_dirs if dir.get('name') == item.text()][0], item)
 
     def right_clicked_menu(self, pos):
@@ -533,3 +538,4 @@ class ModelListTreeView(QTreeView):
             self.model().removeRow(index.row())
 
         self.rewrite_config()
+

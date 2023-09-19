@@ -33,6 +33,7 @@ class ApiWindow(QWidget):
         # 接口文件夹树
         self.api_list_tree = ApiListWidgets.ApiListTreeView(self, self.main_window.curr_proj)
         self.api_list_tree.clicked.connect(self.api_selected_event)
+        self.api_list_tree.rewrite_signal.rewrite_signal.connect(self.disable_tab_widget)
         main_layout.addWidget(self.api_list_tree)
 
         # 右侧选项卡

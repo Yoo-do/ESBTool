@@ -18,6 +18,7 @@ class ModelWindow(QWidget):
 
         self.model_list_tree = ModelListWidgets.ModelListTreeView(self, self.main_window.curr_proj)
         self.model_list_tree.clicked.connect(self.model_selected_event)
+        self.model_list_tree.rewrite_signal.rewrite_signal.connect(self.clear_model_detail)
         main_layout.addWidget(self.model_list_tree)
 
         # 模型细节
@@ -73,17 +74,20 @@ class ModelWindow(QWidget):
         # 提示框删除
         self.main_window.clear_status_info()
 
+    def clear_model_detail(self):
+        self.model_import_button.setEnabled(False)
+        self.model_verify_button.setEnabled(False)
+        self.model_save_button.setEnabled(False)
+        if self.tree_standard_model is not None:
+            self.tree_standard_model.clear()
+
     def fresh_model_detail(self, data: dict):
         """
         刷新节点数据
         """
         if data is None:
             # 按钮状态调整
-            self.model_import_button.setEnabled(False)
-            self.model_verify_button.setEnabled(False)
-            self.model_save_button.setEnabled(False)
-            if self.tree_standard_model is not None:
-                self.tree_standard_model.clear()
+            self.clear_model_detail()
             return
 
         self.tree_standard_model = ModelDetailWidgets.ModelStandardModel()

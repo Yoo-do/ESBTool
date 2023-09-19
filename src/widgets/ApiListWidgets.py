@@ -4,9 +4,14 @@ Api列表窗体
 
 from PyQt5.QtWidgets import QTreeView, QAction, QMenu, QAbstractItemView, QDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex
+from PyQt5.QtCore import Qt, QDataStream, QIODevice, QModelIndex, pyqtSignal
+from PyQt5.Qt import QObject
 
 from src.utils import FileIO, Log
+
+
+class ApiRewriteSignal(QObject):
+    rewrite_signal = pyqtSignal()
 
 
 class ApiListStandardItem(QStandardItem):
@@ -108,6 +113,7 @@ class ApiListTreeView(QTreeView):
 
         self.proj = proj
         self.standard_model = None
+        self.rewrite_signal = ApiRewriteSignal()
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -170,8 +176,8 @@ class ApiListTreeView(QTreeView):
         expanded_dirs = []
         for row in range(self.model().rowCount()):
             expanded_dirs += self.get_expanded_dirs(self.model().index(row, 0))
-        print(expanded_dirs)
         self.fresh_data(expanded_dirs)
+        self.rewrite_signal.rewrite_signal.emit()
 
     def get_expanded_dirs(self, parent_index: QModelIndex):
         expanded_dirs = []
@@ -469,7 +475,6 @@ class ApiListTreeView(QTreeView):
 
         self.proj.add_api(item.get_full_name())
         self.rewrite_config()
-
 
     def delete_api_event(self):
         """
