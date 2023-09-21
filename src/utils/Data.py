@@ -57,7 +57,7 @@ class Model:
                     properties.update({key: Model.generate_jsonschema(val)})
                 else:
                     properties.update(
-                        {key: {'type': get_type(val), 'tittle': val.__str__(), 'description': '', 'require': True}})
+                        {key: {'type': get_type(val), 'title': val.__str__(), 'description': '', 'require': True}})
 
             result.update({'properties': properties})
             result.update({'required': required})
@@ -237,6 +237,22 @@ class Proj:
 
         return models
 
+    def get_model_nums(self, data: dict = None):
+        """
+        获取模型数量
+        """
+        nums = 0
+        if data is None:
+            data = self.model_config
+
+        for item in data:
+            if item.get('is_dir') is False:
+                nums += 1
+            else:
+                nums += self.get_model_nums(item.get('items'))
+
+        return nums
+
     def delete_model(self, full_model_name):
         """
         删除项目中的模型
@@ -338,6 +354,23 @@ class Proj:
         Log.logger.info(f'复制接口 [{source_api_name}] 生成 [{new_api_name}]')
 
         return api_path
+
+
+    def get_api_nums(self, data: dict = None):
+        """
+        获取模型数量
+        """
+        nums = 0
+        if data is None:
+            data = self.api_config
+
+        for item in data:
+            if item.get('is_dir') is False:
+                nums += 1
+            else:
+                nums += self.get_api_nums(item.get('items'))
+
+        return nums
 
     def export_file(self):
         pass

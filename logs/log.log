@@ -1,4 +1,4 @@
-[2023-09-19 21:10:35,014] INFO: file: Interface.py line: 54 msg: 主界面初始化完成
-[2023-09-19 21:10:37,229] INFO: file: Interface.py line: 153 msg: 打开项目[检查系统]
-[2023-09-19 21:10:41,097] INFO: file: Data.py line: 323 msg: 项目 [检查系统] 新增了接口 [new 1] 
-[2023-09-19 21:10:43,339] INFO: file: Data.py line: 312 msg: 项目 [检查系统] 删除了接口 [new 1]
+[2023-09-21 21:20:34,775] INFO: file: Interface.py line: 54 msg: 主界面初始化完成
+[2023-09-21 21:20:37,650] INFO: file: Interface.py line: 153 msg: 打开项目[检查系统]
+[2023-09-21 21:20:44,050] INFO: file: Data.py line: 275 msg: 项目 [检查系统] 新增了模型 [new 1] 
+[2023-09-21 21:20:51,401] INFO: file: ModelListWidgets.py line: 524 msg: 模型 [new 1] 更名为 [检查申请信息2]

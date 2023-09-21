@@ -47,6 +47,10 @@ class SubWindow:
     def switch_to_window(self, target_window_type: SubWindowType):
         self.stack_widget.setCurrentIndex(target_window_type.value[0])
 
+        # 主页需要刷新数据
+        if target_window_type == SubWindowType.INDEX_WINDOW:
+            self.stack_widget.currentWidget().fresh_data()
+
     def fresh_all_data(self):
         for index in range(self.stack_widget.count()):
             widget = self.stack_widget.widget(index)

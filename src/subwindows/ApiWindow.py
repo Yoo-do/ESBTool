@@ -49,29 +49,29 @@ class ApiWindow(QWidget):
         self.tab_edit.setLayout(tab_edit_layout)
 
         # 设置选选项卡子窗体
-        self.tab_edit_url_tittle = QLabel('url', self.tab_edit)
+        self.tab_edit_url_title = QLabel('url', self.tab_edit)
         self.tab_edit_url_editline = QLineEdit(self.tab_edit)
-        self.tab_edit_request_tittle = QLabel('请求模型', self.tab_edit)
+        self.tab_edit_request_title = QLabel('请求模型', self.tab_edit)
         self.tab_edit_request_combox = QComboBox(self.tab_edit)
-        self.tab_edit_response_tittle = QLabel('响应模型', self.tab_edit)
+        self.tab_edit_response_title = QLabel('响应模型', self.tab_edit)
         self.tab_edit_response_combox = QComboBox(self.tab_edit)
-        self.tab_edit_description_tittle = QLabel('描述信息', self.tab_edit)
+        self.tab_edit_description_title = QLabel('描述信息', self.tab_edit)
         self.tab_edit_description_textedit = QTextEdit(self.tab_edit)
         self.tab_edit_description_textedit.adjustSize()
-        self.tab_edit_valid_tittle = QLabel('是否在用', self.tab_edit)
+        self.tab_edit_valid_title = QLabel('是否在用', self.tab_edit)
         self.tab_edit_valid_combox = QComboBox(self.tab_edit)
 
 
         # 布局
-        tab_edit_layout.addWidget(self.tab_edit_url_tittle)
+        tab_edit_layout.addWidget(self.tab_edit_url_title)
         tab_edit_layout.addWidget(self.tab_edit_url_editline)
-        tab_edit_layout.addWidget(self.tab_edit_request_tittle)
+        tab_edit_layout.addWidget(self.tab_edit_request_title)
         tab_edit_layout.addWidget(self.tab_edit_request_combox)
-        tab_edit_layout.addWidget(self.tab_edit_response_tittle)
+        tab_edit_layout.addWidget(self.tab_edit_response_title)
         tab_edit_layout.addWidget(self.tab_edit_response_combox)
-        tab_edit_layout.addWidget(self.tab_edit_description_tittle)
+        tab_edit_layout.addWidget(self.tab_edit_description_title)
         tab_edit_layout.addWidget(self.tab_edit_description_textedit)
-        tab_edit_layout.addWidget(self.tab_edit_valid_tittle)
+        tab_edit_layout.addWidget(self.tab_edit_valid_title)
         tab_edit_layout.addWidget(self.tab_edit_valid_combox)
 
         # “预览”选项卡
@@ -81,19 +81,19 @@ class ApiWindow(QWidget):
         tab_preview_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.tab_preview.setLayout(tab_preview_layout)
 
-        self.tab_preview_request_tittle = QLabel('请求模型', self.tab_preview)
+        self.tab_preview_request_title = QLabel('请求模型', self.tab_preview)
         self.tab_preview_request_model_table = QTableView(self.tab_preview)
         self.tab_preview_request_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.tab_preview_response_tittle = QLabel('响应模型', self.tab_preview)
+        self.tab_preview_response_title = QLabel('响应模型', self.tab_preview)
         self.tab_preview_response_model_table = QTableView(self.tab_preview)
         self.tab_preview_response_model_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
 
         # 窗体放入布局
-        tab_preview_layout.addWidget(self.tab_preview_request_tittle)
+        tab_preview_layout.addWidget(self.tab_preview_request_title)
         tab_preview_layout.addWidget(self.tab_preview_request_model_table)
-        tab_preview_layout.addWidget(self.tab_preview_response_tittle)
+        tab_preview_layout.addWidget(self.tab_preview_response_title)
         tab_preview_layout.addWidget(self.tab_preview_response_model_table)
 
         # 未选中时，禁用窗体
@@ -263,10 +263,10 @@ class ApiWindow(QWidget):
             name_item = QStandardItem(key)
             type_item = QStandardItem(value.get('type'))
             required_item = QStandardItem('是' if value.get('require') else '否')
-            tittle_item = QStandardItem(value.get('tittle'))
+            title_item = QStandardItem(value.get('title'))
             description_item = QStandardItem(value.get('description'))
 
-            self.request_table_model.appendRow([name_item, type_item, required_item, tittle_item, description_item])
+            self.request_table_model.appendRow([name_item, type_item, required_item, title_item, description_item])
 
             data_type = value.get('type')
             if data_type == 'object':
@@ -284,10 +284,10 @@ class ApiWindow(QWidget):
             name_item = QStandardItem(key)
             type_item = QStandardItem(value.get('type'))
             required_item = QStandardItem('是' if value.get('require') else '否')
-            tittle_item = QStandardItem(value.get('tittle'))
+            title_item = QStandardItem(value.get('title'))
             description_item = QStandardItem(value.get('description'))
 
-            self.response_table_model.appendRow([name_item, type_item, required_item, tittle_item, description_item])
+            self.response_table_model.appendRow([name_item, type_item, required_item, title_item, description_item])
 
             data_type = value.get('type')
             if data_type == 'object':

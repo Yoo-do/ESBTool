@@ -611,10 +611,10 @@ class ModelStandardModel(QStandardItemModel):
                     else:
                         require = None
 
-                    tittle = None if item.child(index, 3) is None else item.child(index, 3).text()
+                    title = None if item.child(index, 3) is None else item.child(index, 3).text()
                     description = None if item.child(index, 4) is None else item.child(index, 4).text()
                     if item.child(index).rowCount() == 0:
-                        result.update({col_name: {"type": data_type, "tittle": tittle, "description": description,
+                        result.update({col_name: {"type": data_type, "title": title, "description": description,
                                                   "require": require}})
                     else:
                         if data_type == 'array':

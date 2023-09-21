@@ -102,7 +102,7 @@ class ModelWindow(QWidget):
             # 生成节点
             root = ModelDetailWidgets.ModelStandardItem(self.model_detial_tree, parent, name, data.get('type'),
                                                         data.get('require'),
-                                                        data.get('tittle'), data.get('description'))
+                                                        data.get('title'), data.get('description'))
 
             # 判断是否有子节点需要生成
             if data['type'] == 'object':

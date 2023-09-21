@@ -40,8 +40,8 @@ class Interface(QMainWindow):
 
         self.resize(1000, 800)
         self.move(400, 100)
-        self.window_tittle = 'ESBTool 测试版'
-        self.setWindowTitle(self.window_tittle)
+        self.window_title = 'ESBTool 测试版'
+        self.setWindowTitle(self.window_title)
         self.setWindowIcon(QIcon(QPixmap(path_lead.get_path(r'\icon\ESBTool.png'))))
 
         # 菜单栏初始化
@@ -110,7 +110,7 @@ class Interface(QMainWindow):
         if proj_name is not None:
             self.curr_proj_name = proj_name
             self.curr_proj = Data.Proj(proj_name)
-            self.setWindowTitle(self.window_tittle + '  -- ' + proj_name)
+            self.setWindowTitle(self.window_title + '  -- ' + proj_name)
 
             self.set_actions_enable(True)
 
@@ -174,13 +174,26 @@ class Interface(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, '错误消息', e.__str__(), QMessageBox.Ok)
 
+    def switch_menubar_action(self, action: QAction):
+        """
+        高亮当前窗口
+        """
+        self.index_action.setChecked(False)
+        self.model_action.setChecked(False)
+        self.api_action.setChecked(False)
+
+        action.setChecked(True)
+
     def show_index_window(self):
+        self.switch_menubar_action(self.index_action)
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.INDEX_WINDOW)
 
     def show_model_window(self):
+        self.switch_menubar_action(self.model_action)
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.MODEL_WINDOW)
 
     def show_api_window(self):
+        self.switch_menubar_action(self.api_action)
         self.sub_window_object.switch_to_window(SubWindow.SubWindowType.API_WINDOW)
 
     def test_event(self):

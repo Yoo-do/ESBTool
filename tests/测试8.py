@@ -1,39 +1,34 @@
-from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMenuBar
 
-# 自定义信号类
-class MySignal(QObject):
-    my_signal = pyqtSignal()  # 定义一个信号
 
-# 继承QTreeView的自定义类
-class MyTreeView(QTreeView):
-    def __init__(self):
-        super().__init__()
-        self.my_signal = MySignal()  # 实例化自定义信号类
-
-    def do_something(self):
-        # 执行某个方法
-        # ...
-
-        self.my_signal.my_signal.emit()  # 发出信号
-
-# 主窗体类
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.initUI()
 
-        self.tree_view = MyTreeView()
-        self.setCentralWidget(self.tree_view)
+    def initUI(self):
+        self.setWindowTitle('设置选中状态')
 
-        self.tree_view.my_signal.my_signal.connect(self.special_method)  # 连接信号与槽
+        # 创建一个菜单栏
+        menu_bar = self.menuBar()
 
-    def special_method(self):
-        # 执行特定方法
-        # ...
-        print("收到信号，执行特定方法")
+        # 创建一个菜单
+        menu = menu_bar.addMenu('菜单')
+
+        # 创建一个动作
+        action = QAction('动作', self)
+
+        # 将动作添加到菜单中
+        menu.addAction(action)
+
+        # 设置动作的选中状态
+        action.setChecked(True)
+
+        self.show()
+
 
 if __name__ == '__main__':
-    app = QApplication([])
+    app = QApplication(sys.argv)
     window = MainWindow()
-    window.show()
-    app.exec_()
+    sys.exit(app.exec_())
